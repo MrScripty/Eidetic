@@ -100,7 +100,10 @@ pub use script_document::{
     ScriptSegmentId, ScriptSegmentProjection, ScriptSegmentStatus, ScriptSpan, ScriptSpanId,
     ScriptSpanProvenance, SetScriptBlockCommand, SetScriptLockCommand,
 };
-pub use script_impact_review::{RequestScriptImpactProposalCommand, ScriptImpactProposalBinding};
+pub use script_impact_review::{
+    RequestScriptImpactProposalCommand, ScriptImpactProposalBinding, ScriptRecallFactSelection,
+    ScriptRecallSelection,
+};
 pub use selected_node_editor::{
     SelectedNodeEditorAdjacentParents, SelectedNodeEditorNode, SelectedNodeEditorProjection,
     SelectedNodeEditorSummary,

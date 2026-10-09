@@ -19,6 +19,30 @@ pub struct RequestScriptImpactProposalCommand {
     pub dependency_id: SemanticDependencyId,
     #[serde(default)]
     pub story_time_ms: Option<u64>,
+    /// Optional author selection, never client-supplied prompt values.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recall_selection: Option<ScriptRecallSelection>,
+}
+
+/// Bounded supplemental evidence for one existing impact preview.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ScriptRecallSelection {
+    pub query: super::BibleRecallRequest,
+    pub facts: Vec<ScriptRecallFactSelection>,
+    /// Exact displayed name/path receipts; canonical reads must match these.
+    pub names: Vec<super::BibleNodeNameInput>,
+    pub paths: Vec<super::BibleRecallPath>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ScriptRecallFactSelection {
+    pub node_id: super::BibleGraphNodeId,
+    pub part_key: super::BibleGraphPartKey,
+    pub field_key: super::BibleGraphFieldKey,
+    pub field_id: super::BibleGraphFieldId,
+    pub revision_event_id: ChangeEventId,
 }
 
 /// Canonical evidence captured before provider I/O and rechecked at acceptance.
@@ -72,6 +96,7 @@ mod tests {
             generation_event_id: ChangeEventId(uuid::Uuid::new_v4()),
             dependency_id: SemanticDependencyId::new("B.input-A").unwrap(),
             story_time_ms: None,
+            recall_selection: None,
         };
         let mut json = serde_json::to_value(&request).unwrap();
         assert_eq!(
@@ -80,5 +105,23 @@ mod tests {
         );
         json["proposed_text"] = serde_json::json!("Client supplied replacement");
         assert!(serde_json::from_value::<RequestScriptImpactProposalCommand>(json).is_err());
+    }
+
+    #[test]
+    fn recall_selectors_allow_only_identity_and_expected_revision_not_client_fact_values() {
+        let fact = ScriptRecallFactSelection {
+            node_id: super::super::BibleGraphNodeId::new("Mara").unwrap(),
+            part_key: super::super::BibleGraphPartKey::new("profile").unwrap(),
+            field_key: super::super::BibleGraphFieldKey::new("tagline").unwrap(),
+            field_id: super::super::BibleGraphFieldId::new("Mara.tagline").unwrap(),
+            revision_event_id: ChangeEventId(uuid::Uuid::new_v4()),
+        };
+        let mut json = serde_json::to_value(&fact).unwrap();
+        assert_eq!(
+            serde_json::from_value::<ScriptRecallFactSelection>(json.clone()).unwrap(),
+            fact
+        );
+        json["value"] = serde_json::json!("Invented fact");
+        assert!(serde_json::from_value::<ScriptRecallFactSelection>(json).is_err());
     }
 }

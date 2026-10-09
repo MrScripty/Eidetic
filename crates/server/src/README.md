@@ -31,6 +31,8 @@ domain model in `eidetic-core`.
 | `script_generation_lineage_tests.rs` | A-to-B/unrelated-C, edits during generation, atomic rollback, replay, source deletion, refreshed and unavailable binding regressions. |
 | `script_impact_projection.rs` | Derived Needs review causes against the latest successful generation, retaining historical source excerpts after deletion. |
 | `script_impact_review.rs` | Proven-cause capture, revision-bound propagation proposal recording and atomic targeted acceptance with refreshed lineage. |
+| `script_recall_selection.rs` | Explicit selected baseline supplementation via shared recall inside the proposal snapshot, expected source/name/path guards and bounded prompt merging. |
+| `script_recall_selection_tests.rs` | Far-peer selected/unselected prompt proof, empty compatibility, stale/ABA/deletion/temporal refusals, draft-independent canonical preservation, locks, placement and downstream impact. |
 | `script_impact_review_tests.rs` | Linked-scene preview/reject/accept, stale/ABA, graph-time, lock, replay, target-scope and rollback fixtures. |
 | `script_impact_review_guard_tests.rs` | Resolved-world context, explicit fictional time and late span/content regeneration lock guards. |
 | `script_impact_review_service.rs` | Desktop-facing preview service using the configured provider without committing screenplay output. |
@@ -360,6 +362,21 @@ assert!(result.is_ok());
 ```
 
 ## API Consumer Contract
+Existing targeted-preview requests accept optional author-selected recall
+selectors. `script_recall_selection` owns eligibility: at most eight facts, nine
+endpoint names and 32 connecting paths, unspecified fictional time, exact
+canonical baseline IDs/revisions and displayed name/path receipts. It calls the
+shared recall reader within `script_impact_review::capture`'s SQLite snapshot.
+Only chosen supplemental values and their names/untimed connecting paths enter
+this preview; existing automatic context is retained unchanged. No context link
+is written. Fresh canonical fields/names/relationships use existing consumed
+receipts and dependency recording at explicit acceptance. The existing
+`BibleContextScope` remains entity-scoped membership custody, distinct from
+actual selected value consumption. Empty selection bypasses supplementation.
+Record/accept recapture includes selectors; stale work never replaces saved text
+or amends an older proposal. Snapshot consumption needs a separate temporal
+lineage decision and is intentionally refused in this slice.
+
 - Tauri command/event adapters consume backend services directly instead of
   calling Axum handlers.
 - Realtime event ordering must remain compatible with the desktop event

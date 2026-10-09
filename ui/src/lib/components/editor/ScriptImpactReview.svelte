@@ -1,5 +1,6 @@
 <script lang="ts">
   import ScriptArcEvidence from './ScriptArcEvidence.svelte';
+  import ScriptRecallFacts from './ScriptRecallFacts.svelte';
   import type { ScriptSegmentProjection } from '$lib/scriptTypes.js';
   import {
     propagationProposalProjectionState,
@@ -13,6 +14,7 @@
   let { documentId, segment }: { documentId: string; segment: ScriptSegmentProjection } = $props();
   let selectedCause = $state('');
   let error = $state('');
+  let recallFacts: ScriptRecallFacts | undefined = $state();
   let block = $derived(
     segment.blocks.find((item) => item.block.id === segment.impact?.output_block_id),
   );
@@ -43,6 +45,7 @@
     if (!block?.revision_event_id || !cause || !segment.impact) return;
     error = '';
     try {
+      const recallSelection = recallFacts?.getSelection() ?? null;
       await applyRequestScriptImpactProposalCommand({
         proposal_id: `script.review.${crypto.randomUUID()}`,
         document_id: documentId,
@@ -52,6 +55,7 @@
         generation_event_id: segment.impact.generation_event_id,
         dependency_id: cause.dependency_id,
         story_time_ms: null,
+        ...(recallSelection ? { recall_selection: recallSelection } : {}),
       });
     } catch (failure) {
       error = failure instanceof Error ? failure.message : 'Preview failed';
@@ -89,6 +93,16 @@
           {/each}
         </select>
       </label>
+      <ScriptRecallFacts
+        bind:this={recallFacts}
+        scope={JSON.stringify([
+          documentId,
+          segment.segment.id,
+          block?.revision_event_id,
+          segment.impact.generation_event_id,
+        ])}
+        disabled={pending}
+      />
       <button
         type="button"
         onclick={preview}
@@ -122,6 +136,22 @@
           absent={proposal.script_review_binding?.arc_absence_revisions}
         />
         <pre aria-label="Proposed text">{proposal.proposed_text}</pre>
+        {#if proposal.script_review_binding?.request.recall_selection?.facts.length}
+          <details>
+            <summary>Author-selected recalled facts used for this preview</summary>
+            <p>Unspecified fictional time · baseline facts · connecting paths are untimed.</p>
+            {#each proposal.script_review_binding.request.recall_selection.facts as fact (fact.field_id)}
+              {@const input = proposal.script_review_binding.bible_inputs?.find(
+                (input) => input.field_id === fact.field_id,
+              )}
+              <p>
+                {fact.node_id} · {fact.part_key}.{fact.field_key}: {JSON.stringify(
+                  input?.value.value,
+                )} · {fact.field_id} · revision {fact.revision_event_id}
+              </p>
+            {/each}
+          </details>
+        {/if}
         {#if proposal.script_review_binding?.bible_node_name_inputs?.length}
           <details aria-label="Recorded screenplay name evidence">
             <summary>Names used for this preview</summary>

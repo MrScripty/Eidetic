@@ -91,11 +91,47 @@ it('renders exact proposed text alongside current canon and explicit review acti
               generation_event_id: 'generation.B',
               dependency_id: 'B.input-A',
               story_time_ms: null,
+              recall_selection: {
+                query: {
+                  anchor_node_id: 'Mara',
+                  story_time_ms: null,
+                  direction: 'both',
+                  edge_kinds: [],
+                  neighbor_limit: 8,
+                },
+                facts: [
+                  {
+                    node_id: 'Mara',
+                    part_key: 'profile',
+                    field_key: 'tagline',
+                    field_id: 'Mara.tagline',
+                    revision_event_id: 'chosen-field-revision',
+                  },
+                ],
+                names: [
+                  {
+                    node_id: 'Mara',
+                    name: 'Captured <Marisol>',
+                    revision_event_id: 'name-original-revision',
+                  },
+                ],
+                paths: [],
+              },
             },
             cause: segment.impact!.causes[0]!,
             target_segment_revision_event_id: 'B-placement',
             script_inputs: [],
             bible_context: { version: 1, payload: {} },
+            bible_inputs: [
+              {
+                node_id: 'Mara',
+                part_key: 'profile',
+                field_key: 'tagline',
+                field_id: 'Mara.tagline',
+                revision_event_id: 'chosen-field-revision',
+                value: { type: 'text', value: 'Chosen <exact fact> — 雨' },
+              },
+            ],
             bible_node_name_inputs: [
               {
                 node_id: 'Mara',
@@ -132,6 +168,10 @@ it('renders exact proposed text alongside current canon and explicit review acti
   expect(body).toContain('Relationships used for this preview');
   expect(body).toContain('Original captured &lt;relationship>');
   expect(body).toContain('edge-original-revision');
+  expect(body).toContain('Author-selected recalled facts used for this preview');
+  expect(body).toContain('Chosen &lt;exact fact> — 雨');
+  expect(body).toContain('chosen-field-revision');
+  expect(body).toContain('Unspecified fictional time');
   expect(segment.blocks[0]?.block.text).toBe('  Canonical B — 雨\n\n');
 });
 

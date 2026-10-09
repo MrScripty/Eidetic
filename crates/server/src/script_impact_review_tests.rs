@@ -118,6 +118,7 @@ pub(crate) fn request(
         generation_event_id: impact.generation_event_id,
         dependency_id: impact.causes[0].dependency_id.clone(),
         story_time_ms: None,
+        recall_selection: None,
     })
 }
 

@@ -10,7 +10,8 @@ import type { CommandOutcome, FieldValue, ProjectionEnvelope } from './projectio
 import type { ScriptBlockId, ScriptPatch, ScriptSegmentId } from './scriptTypes.js';
 import type { ScriptContextBlock, ScriptImpactCause } from './scriptTypes.js';
 import type { SemanticProposalStatus } from './semanticProposalTypes.js';
-import type { AiBibleContextEdge } from './childPlanningTypes.js';
+import type { AiBibleContextEdge, BibleFieldInput } from './childPlanningTypes.js';
+import type { BibleRecallProjection, BibleRecallRequest } from './bibleRecallTypes.js';
 
 export type PropagationProposalId = string;
 export type BibleGraphFieldId = string;
@@ -70,6 +71,7 @@ export interface PropagationProposal {
     target_segment_revision_event_id: string;
     script_inputs: ScriptContextBlock[];
     bible_context: ProjectionEnvelope<unknown>;
+    bible_inputs?: BibleFieldInput[];
     bible_node_name_inputs?: { node_id: string; name: string; revision_event_id: string }[] | null;
     bible_node_name_absence_revisions?: [string, string][] | null;
     bible_relationship_inputs?:
@@ -91,6 +93,20 @@ export interface RequestScriptImpactProposalCommand {
   generation_event_id: string;
   dependency_id: string;
   story_time_ms?: number | null;
+  recall_selection?: ScriptRecallSelection | null;
+}
+
+export interface ScriptRecallSelection {
+  query: BibleRecallRequest;
+  facts: {
+    node_id: string;
+    part_key: string;
+    field_key: string;
+    field_id: string;
+    revision_event_id: string;
+  }[];
+  names: { node_id: string; name: string; revision_event_id: string }[];
+  paths: BibleRecallProjection['paths'];
 }
 
 export interface CreatePropagationProposalCommand {

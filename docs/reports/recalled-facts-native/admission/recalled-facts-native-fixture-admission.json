@@ -1,0 +1,19 @@
+{
+  "route": "public project/command/read services; local fixture setup only, no native UI claim",
+  "active_nodes": 216,
+  "far_peer_not_in_first_200_by_order": true,
+  "exact_peer_fields": [
+    [
+      "qualification.keeper.motivation",
+      "UNSELECTED brass key in cellar.",
+      "d05e3c33-9e9c-4271-bc8b-a9eef28f450f"
+    ],
+    [
+      "qualification.keeper.tagline",
+      "SELECTED dry roof key — 雨.",
+      "7fbecf98-f125-495e-9242-e0663db22df2"
+    ]
+  ],
+  "model_execution": "none",
+  "fixture_output_sha256": "e23f0305cbb471567ef8184c64ab98510b7f737e7c06481581eed2d78b05ad9c"
+}

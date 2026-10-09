@@ -126,11 +126,12 @@ fn capture_in_snapshot(
             }
         }
     }
-    let bible_context = crate::ai_context_projection::load_ai_bible_context_projection(
+    let mut bible_context = crate::ai_context_projection::load_ai_bible_context_projection(
         conn,
         node_id,
         request.story_time_ms,
     )?;
+    crate::script_recall_selection::append(conn, request, &mut bible_context.payload)?;
     if let SemanticDependencyEndpoint::BibleField { node_id, .. } = &cause.input
         && cause.current_revision_event_id.is_some()
         && !bible_context

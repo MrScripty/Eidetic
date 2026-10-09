@@ -1,0 +1,10 @@
+[launcher] [state] using isolated dev state at <qualification state>/dev
+   Compiling eidetic-desktop v0.1.0 (<repo>/src-tauri)
+    Finished `dev` profile [unoptimized] target(s) in 10.83s
+     Running `target/debug/eidetic-desktop`
+libEGL warning: DRI3 error: Could not get DRI3 device
+libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+2026-10-07T08:01:45.752418Z  INFO eidetic_server::state: No Pumas model library found (set PUMAS_MODELS_DIR to enable)
+2026-10-07T08:01:45.752563Z  INFO eidetic_server::ydoc: Y.Doc manager started
+2026-10-07T08:01:53.300595Z  INFO eidetic_server::ai_generation_runtime: Scene recap generated for node f5b372d8-b0c8-45ed-a9b8-346611d86ba0
+Terminated

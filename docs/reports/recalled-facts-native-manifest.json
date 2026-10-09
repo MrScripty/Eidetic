@@ -1,0 +1,798 @@
+{
+  "schema": "eidetic.recalled-facts-preview.native-evidence.v1",
+  "recorded_at_utc": "2026-10-07T08:23:57.633191+00:00",
+  "application_source": {
+    "commit": "e140290ed4414585c0c507874fab5b0e04c9dc22",
+    "tree": "c1c682d2487c5f9901f55c4b89339b9eaf2188d2",
+    "branch": "feat/recalled-facts-screenplay-preview",
+    "unchanged_during_qualification": true,
+    "requested_PR9_successor": "25b860d12fe37a3538a40616cc02ab4a81370863",
+    "requested_PR9_tree": "d22b036891aed7eb66fc94059aa1b5c1d9aab85a",
+    "application_binary_sha256_identical_across_all_attempts": "cbf49237cdb3d3f722bf65c9e0dad82f4205f7b33f528034b01ca87997ed154e"
+  },
+  "qualifier": {
+    "commit": "81664a3748936f1678655384c498e1aa8515bf82",
+    "tree": "137d23c6a6f139cffad5046d37f6ac67319fbb58",
+    "branch": "test/recalled-facts-preview-native",
+    "allowlisted_files": [
+      {
+        "path": ".github/workflows/recalled-facts-native.yml",
+        "bytes": 5889,
+        "sha256": "1d04e7ccdb89260500c51885dac2ad8a189c1dc7bf969e982b6043c24b80d0e2"
+      },
+      {
+        "path": "crates/server/examples/bible_recall_capture_fixture.rs",
+        "bytes": 9766,
+        "sha256": "c043d1edbf14d39ae4132c50c71da566b2a2cda517f6dbf52f5b82ff4226158d"
+      },
+      {
+        "path": "scripts/qualify-bible-recall.py",
+        "bytes": 32514,
+        "sha256": "b9e42ee60ad254c98bb1c2b865b72f1db76162abc72f98a0c74a07c411dee02d"
+      },
+      {
+        "path": "scripts/qualify-recalled-facts-preview.py",
+        "bytes": 23389,
+        "sha256": "6202d812ba4d03c8f1020c23f7c52dc01560d4c8b66c9802c115172ce0e5adde"
+      },
+      {
+        "path": "scripts/recalled-facts-vite.config.mts",
+        "bytes": 1438,
+        "sha256": "190c0236ffaba6d66930d2027f12e0795bea83018b87460c1f2e86292b3ff561"
+      },
+      {
+        "path": "scripts/test_qualify_bible_recall.py",
+        "bytes": 6724,
+        "sha256": "dcaca22d2181fbd2884bc63958d4f65c5a28720106f48ccc1cb8d1286d2432a8"
+      },
+      {
+        "path": "scripts/test_qualify_recalled_facts_preview.py",
+        "bytes": 9813,
+        "sha256": "4ea536c4100bd883e9861888e4b5a8161226cff0ee910f519148d864e000c750"
+      },
+      {
+        "path": "ui/src/qualification/README.md",
+        "bytes": 2240,
+        "sha256": "b6a388524d39eabc4521812c9b7719cdfd39a8d0795e23590a58b630fce4ca5f"
+      },
+      {
+        "path": "ui/src/qualification/RecalledFactsControls.svelte",
+        "bytes": 1373,
+        "sha256": "7f8316e5c1684bfcd40c5b5e0a64fb0e9222d527454fd34b76357c05ecb68ff6"
+      },
+      {
+        "path": "ui/src/qualification/recalledFacts.svelte.ts",
+        "bytes": 2661,
+        "sha256": "fb413420c9b78dc34131cc3884d26e60bf4ff666f9d72ef01dd13b3a4aea6da4"
+      }
+    ],
+    "instrumented_native_host": true,
+    "public_command_mutation_and_stale_replay": true
+  },
+  "success": {
+    "run_id": 37591664568,
+    "job_id": 112694354395,
+    "qualifier_sha": "81664a3748936f1678655384c498e1aa8515bf82",
+    "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37591664568",
+    "artifact_id": 11468899811,
+    "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37591664568/artifacts/11468899811",
+    "artifact_file_id": "file_00000000b1dc823093fb47acb1988ad8",
+    "zip_sha256": "2cebaa585fee0236a1c54f80285b0bf18b22ac7f302c29da2698b5f803f23fe4",
+    "zip_path": "/workspace/attachments/1b84c965-abff-456d-88c1-c21baaea49bf/recalled-facts-native-success-37591664568.zip",
+    "extracted_path": "/workspace/scratch/recalled-facts-native-success-37591664568",
+    "result": "success",
+    "original_pngs_individually_inspected": true,
+    "metadata_status": "native_recalled_facts_selection_passed_with_labelled_QA_replay_controls",
+    "error": null,
+    "capture_count": 8,
+    "sealed_original_files": [
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/app-sanitized.log",
+        "bytes": 716,
+        "sha256": "8083ff5625eac94d2ea1e2e5bfb5c3fba10f0f430ada3c43f03ae53afc8b97e1"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/capture-evidence.json",
+        "bytes": 111974,
+        "sha256": "df27e4cba319d7852edf8f2b8e7883e7c77e688a2f576164fe692a546d37aaeb"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-bible-recall-pending-review.png",
+        "bytes": 213427,
+        "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-accepted.png",
+        "bytes": 199039,
+        "sha256": "9dfc957333fbdd7d238a62a70d0a1d5be1a3c0f2249f614f625f28cbe0467bfb"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-baseline-selected.png",
+        "bytes": 238249,
+        "sha256": "1b63c5af6fac87ccb3bc8d15715a2058980655292702772e0b4f443628429914"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-fresh-pending.png",
+        "bytes": 249536,
+        "sha256": "2936d75e9d34d992db827a651758d040129e57b61e85213d0d6852cf72c8625b"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-fresh-selected.png",
+        "bytes": 261378,
+        "sha256": "7c54e9898693ebd7c9efca46e7510863d524b756c3d97998435f96c5607aee8e"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-selected-pending.png",
+        "bytes": 238016,
+        "sha256": "18ab44fba214d5acda645b08f0d6a526d6954227555d36259a70965a345b8139"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-stale-refused.png",
+        "bytes": 216510,
+        "sha256": "b7f5c4e28a76158be9d32885f9077c9614ea4aa1cf7e584b39b5f80489c08e3b"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/eidetic-recalled-facts-subsequent-impact.png",
+        "bytes": 216890,
+        "sha256": "f76219fe8f28b0a537b1bf0be42d2e58718cc62a3601ecc64bd9092c5721d360"
+      },
+      {
+        "path": "docs/reports/recalled-facts-native/37591664568/qualification-host-sanitized.log",
+        "bytes": 97,
+        "sha256": "a7693460c2d492e3a0803b76cc0b1e0abcbf34e1b635abaf7d47cb60bc094e1d"
+      }
+    ]
+  },
+  "retained_failed_qualifier_attempts": [
+    {
+      "run_id": 37582175432,
+      "job_id": 112664116108,
+      "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37582175432",
+      "artifact_id": 11466240942,
+      "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37582175432/artifacts/11466240942",
+      "artifact_file_id": "file_00000000a77c8230befc45b5b9bc708c",
+      "qualifier_sha": "3fce4d8a209b1c7e5de99d4461f434fc4040ef8b",
+      "zip_sha256": "d075873e337b98604b24f45cb88cb256e0f026d2730c3f18c7b6935b19da84de",
+      "zip_path": "/workspace/attachments/57e22611-ebbc-41af-9271-63ccd9a50e24/recalled-facts-native-first-failure-37582175432.zip",
+      "extracted_path": "/workspace/scratch/recalled-facts-native-first-failure-37582175432",
+      "result": "failure",
+      "qualifier_failure_reason": "Fixture rejected legitimate original-value provenance excerpt; corrected supplied-field assertion.",
+      "metadata_status": "failed",
+      "error": "Timed out waiting for saved pending targeted proposal",
+      "capture_count": 1,
+      "sealed_original_files": [
+        {
+          "path": "docs/reports/recalled-facts-native/37582175432/app-sanitized.log",
+          "bytes": 716,
+          "sha256": "61f230690178416d9ec43e30158eb083e7217be840599a2c994643fdb0ab43fd"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37582175432/capture-evidence.json",
+          "bytes": 52365,
+          "sha256": "732384966bf7c64c163bf4181083deb5650cc76e76208a52c8d8344de0701350"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37582175432/eidetic-bible-recall-failure.png",
+          "bytes": 219652,
+          "sha256": "4d302abe141a34ce5d1d777d55cb86a59cc9379c2494056483cacbaeddefeaec"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37582175432/qualification-host-sanitized.log",
+          "bytes": 97,
+          "sha256": "0e6edcae17e205fae4d2c612472c70ab35f82ca8283347fccac3d7bf5ae2f6ae"
+        }
+      ]
+    },
+    {
+      "run_id": 37584544244,
+      "job_id": 112671582448,
+      "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37584544244",
+      "artifact_id": 11466274089,
+      "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37584544244/artifacts/11466274089",
+      "artifact_file_id": "file_00000000ccb481f7a2015579fdb41841",
+      "qualifier_sha": "50279ed42f351903c15e27b526b475ee11b953ca",
+      "zip_sha256": "e1e950f05be24f7c4f9cd67ddafa12263ce8c3b763d34fc39ef6a4ed14893722",
+      "zip_path": "/workspace/attachments/4517b162-77d2-4c15-aa8f-092418dc385c/recalled-facts-native-second-failure-37584544244.zip",
+      "extracted_path": "/workspace/scratch/recalled-facts-native-second-failure-37584544244",
+      "result": "failure",
+      "qualifier_failure_reason": "Empty-value typing helper did not delete the old story time; replaced with native Ctrl+A and BackSpace plus exact-empty assertion.",
+      "metadata_status": "failed",
+      "error": "Timed out waiting for exact typed text",
+      "capture_count": 2,
+      "sealed_original_files": [
+        {
+          "path": "docs/reports/recalled-facts-native/37584544244/app-sanitized.log",
+          "bytes": 716,
+          "sha256": "7227f89c30ca89cb9fb6fe1d071239ba87819541170fc71d6284636c7a7135b1"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37584544244/capture-evidence.json",
+          "bytes": 60423,
+          "sha256": "1911073f443ea555040a19234af1f6b08efc9951db801bd54b635e510457e200"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37584544244/eidetic-bible-recall-failure.png",
+          "bytes": 210159,
+          "sha256": "cd2c2bbe2d0ef8883e6311b465249e12242353c0dc1fde7a62c8b911a2203651"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37584544244/eidetic-bible-recall-pending-review.png",
+          "bytes": 213427,
+          "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37584544244/qualification-host-sanitized.log",
+          "bytes": 97,
+          "sha256": "3febd2c1189283e5667ab8d22883e933b5dde41f1df8e389ed9b01f515932193"
+        }
+      ]
+    },
+    {
+      "run_id": 37586246044,
+      "job_id": 112676915934,
+      "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37586246044",
+      "artifact_id": 11467012048,
+      "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37586246044/artifacts/11467012048",
+      "artifact_file_id": "file_00000000bc2881f8b9892f1a201f2b84",
+      "qualifier_sha": "f4780ac073ac345454fee5e2a9323ce905b2e6c1",
+      "zip_sha256": "9182e12b347c34ca34d880b51651d5d1694dfca963716cca5b5557a7d406e3b4",
+      "zip_path": "/workspace/attachments/635c3a84-0f85-4046-a860-d355aef5e94c/recalled-facts-native-third-failure-37586246044.zip",
+      "extracted_path": "/workspace/scratch/recalled-facts-native-third-failure-37586246044",
+      "result": "failure",
+      "qualifier_failure_reason": "Visible stale acceptance refusal did not expose the assumed AT-SPI ROLE_ALERT.",
+      "metadata_status": "failed",
+      "error": "Timed out waiting for ordinary failed acceptance alert",
+      "capture_count": 4,
+      "sealed_original_files": [
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/app-sanitized.log",
+          "bytes": 716,
+          "sha256": "24078bec0a3178a75b00f42ebd2d418514a26e757fe0837385a97a56c4d4c5c2"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/capture-evidence.json",
+          "bytes": 89700,
+          "sha256": "d8ca3468001086add496519a9c36286f0dcc4d2febda61dcafc79a45272a7084"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/eidetic-bible-recall-failure.png",
+          "bytes": 216955,
+          "sha256": "46131f47948ef9ebee652baa17107a0a46668c70d628fbe734b25269d414591d"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/eidetic-bible-recall-pending-review.png",
+          "bytes": 213427,
+          "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/eidetic-recalled-facts-baseline-selected.png",
+          "bytes": 238249,
+          "sha256": "1b63c5af6fac87ccb3bc8d15715a2058980655292702772e0b4f443628429914"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/eidetic-recalled-facts-selected-pending.png",
+          "bytes": 238445,
+          "sha256": "2d57aaa02bdd29b9a4d56a445c80a209d22da8fe51b0f00aa2e67e087bbb1c18"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37586246044/qualification-host-sanitized.log",
+          "bytes": 97,
+          "sha256": "1c883c4ae3b3ca8de5a32d447127257f1b5f0608362d443a2f34da36851baaab"
+        }
+      ]
+    },
+    {
+      "run_id": 37588269337,
+      "job_id": 112683380166,
+      "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37588269337",
+      "artifact_id": 11467727901,
+      "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37588269337/artifacts/11467727901",
+      "artifact_file_id": "file_000000000548820c86aeb378fe0f7b98",
+      "qualifier_sha": "2488555ae93ea9abe6aa28882c2c09a18e90cc3d",
+      "zip_sha256": "897ee76ac028347f68096805ab3be2481dff22099c7e5265cb7f908be78bee57",
+      "zip_path": "/workspace/attachments/ac912b25-cc03-42b3-967e-c7d8c75fb66c/recalled-facts-native-fourth-failure-37588269337.zip",
+      "extracted_path": "/workspace/scratch/recalled-facts-native-fourth-failure-37588269337",
+      "result": "failure",
+      "qualifier_failure_reason": "Locator still assumed an AT-SPI text role; corrected to exact visible refusal text independent of native role.",
+      "metadata_status": "failed",
+      "error": "Timed out waiting for ordinary failed acceptance refusal",
+      "capture_count": 4,
+      "sealed_original_files": [
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/app-sanitized.log",
+          "bytes": 715,
+          "sha256": "6ddb37ff4bb9761653228db49c51890917aceec1519afc15beba37da1043d234"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/capture-evidence.json",
+          "bytes": 89706,
+          "sha256": "16668089c410463e088c995b289fe9891a8c9877ad305aa165d1bb11759465f0"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/eidetic-bible-recall-failure.png",
+          "bytes": 216648,
+          "sha256": "1a3358d489cecdea874efb7efe3ad4f5e26bb0be71292ad5b78346c3fccabd6d"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/eidetic-bible-recall-pending-review.png",
+          "bytes": 213427,
+          "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/eidetic-recalled-facts-baseline-selected.png",
+          "bytes": 238249,
+          "sha256": "1b63c5af6fac87ccb3bc8d15715a2058980655292702772e0b4f443628429914"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/eidetic-recalled-facts-selected-pending.png",
+          "bytes": 238159,
+          "sha256": "105618e55f37a9d24f37cc10eab81ffe34de9e5e7fc17478942fdba79fdce3f1"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37588269337/qualification-host-sanitized.log",
+          "bytes": 97,
+          "sha256": "ad0abbea02f45b6a5847384e57d47f675abe05780e44e23959b4d0a0218bb6c1"
+        }
+      ]
+    },
+    {
+      "run_id": 37589817427,
+      "job_id": 112688356646,
+      "run_url": "https://github.com/MrScripty/Eidetic/actions/runs/37589817427",
+      "artifact_id": 11468069908,
+      "artifact_url": "https://github.com/MrScripty/Eidetic/actions/runs/37589817427/artifacts/11468069908",
+      "artifact_file_id": "file_0000000027ac81f79bf6fe758e6a16db",
+      "qualifier_sha": "93d28289f2bbc2088b7ea25be08b1f8007b27a60",
+      "zip_sha256": "68877fb10e61bece62e0207bb8ba1ef109acb28df9a10ad7ccfa985bf46f5f77",
+      "zip_path": "/workspace/attachments/70830298-e515-4e1c-a16f-6ef9e6426749/recalled-facts-native-fifth-failure-37589817427.zip",
+      "extracted_path": "/workspace/scratch/recalled-facts-native-fifth-failure-37589817427",
+      "result": "failure",
+      "qualifier_failure_reason": "Fresh acceptance completed with exact target and unrelated-text/draft preservation, but evidence SQL reversed the existing dependency orientation. Corrected to consuming segment source/current generation and Bible field target/consumed revision.",
+      "metadata_status": "failed",
+      "error": "Acceptance did not record selected-fact dependency revision",
+      "capture_count": 7,
+      "sealed_original_files": [
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/app-sanitized.log",
+          "bytes": 716,
+          "sha256": "07fe9d3f0146a537b8afdd5984f1d3fe8eaaf66b4443a79cca6774b648668b3d"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/capture-evidence.json",
+          "bytes": 119632,
+          "sha256": "1876a3573f8cb9a9fe9aa9907348638df03abde6dc4c05fa0b3c5ef5df95ad4b"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-bible-recall-failure.png",
+          "bytes": 199205,
+          "sha256": "54e086b69dbfc2e642258b59bf18a733485f350d642741b7c3782e9b926b5b12"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-bible-recall-pending-review.png",
+          "bytes": 213427,
+          "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-recalled-facts-baseline-selected.png",
+          "bytes": 238249,
+          "sha256": "1b63c5af6fac87ccb3bc8d15715a2058980655292702772e0b4f443628429914"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-recalled-facts-fresh-pending.png",
+          "bytes": 249791,
+          "sha256": "1edbebace1bc50ba2d8136a84bffdd222a1b416d8eae0a8f0872ed59c7459ffc"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-recalled-facts-fresh-selected.png",
+          "bytes": 261766,
+          "sha256": "f13e58f4efd6897a9797a8c6ac4ac641e2efb2cb919b9d4ecc76f8abd5ba9987"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-recalled-facts-selected-pending.png",
+          "bytes": 238638,
+          "sha256": "8593b98da55178244c982972b24591c664499d0cbe891189274353813202da7f"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/eidetic-recalled-facts-stale-refused.png",
+          "bytes": 217117,
+          "sha256": "ba7a9d94c5811a60f478d37455510bd4438ed2d9bf17dabb27170f5f279f4571"
+        },
+        {
+          "path": "docs/reports/recalled-facts-native/37589817427/qualification-host-sanitized.log",
+          "bytes": 97,
+          "sha256": "9ebd1fc058cf012b219dfa68e73dd0313bc6d4250c750663ef5a61bd175a66ac"
+        }
+      ]
+    }
+  ],
+  "hosted_gates": {
+    "result": "passed",
+    "core_tests": 123,
+    "server_tests": 520,
+    "UI_tests": 522,
+    "UI_test_files": 89,
+    "driver_tests": 56,
+    "no_download_tests": 5,
+    "strict_core_server_all_target_clippy": "passed with -D warnings",
+    "UI_typecheck": "0 errors, 0 warnings",
+    "UI_lint_format_production_build": "passed",
+    "labelled_host_compile_and_scoped_marker_check": "passed",
+    "locked_native_desktop_and_public_fixture_build": "passed",
+    "standard_Linux_display_dependencies": "passed",
+    "run_steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2
+      },
+      {
+        "name": "Verify unchanged application source",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3
+      },
+      {
+        "name": "Install standard Linux and display dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4
+      },
+      {
+        "name": "Run dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5
+      },
+      {
+        "name": "Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6
+      },
+      {
+        "name": "Prepare pinned dependency and UI assets",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Build labelled native selected-fact test host",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Check resource floors and build actual native runtime",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 9
+      },
+      {
+        "name": "Run actual server regressions",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Qualify real client inspector effects with labelled selected-fact seams",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Upload only reviewed capture outputs",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Post Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 23
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 24
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 25
+      }
+    ]
+  },
+  "local_supporting_logs": [
+    {
+      "path": "/workspace/scratch/recalled-facts-native-admission.log",
+      "bytes": 292,
+      "sha256": "3bfb005383e8f610421e607ad20de62faa40999b6980901d4e68f9dd5c29977b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-alert-commit.log",
+      "bytes": 16798,
+      "sha256": "14c873582d4f50a39b3fe6350f5c7c5f4f899272bd2af59e097e39680513aa0b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-alert-driver-tests.log",
+      "bytes": 11488,
+      "sha256": "fce6ea8c8a80e76d6e5091b552e2055ec82e7da5c6c31ea072c62006e3c424ba"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-alert-push.log",
+      "bytes": 138,
+      "sha256": "43555b38eaee202d1885a58445ed8ad3e98c749094750af795fdd756aebdbb11"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-build-final-attempt.log",
+      "bytes": 1563,
+      "sha256": "59de039643054db50abc6cd54da76353c04f98db0f24affff26dc32102e15320"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-build-final.log",
+      "bytes": 3668,
+      "sha256": "bca6d450fd74ad97a688508ce97bfba84bc53f67da6ef6983382bf4e6e424b7b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-build.log",
+      "bytes": 3668,
+      "sha256": "9682ec4b6a1881a8e72540b1e373e5607244727b750093466f7ad490a44e6ea0"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-clear-commit.log",
+      "bytes": 16806,
+      "sha256": "bc9057a7f144d2ebacc07aa0045f28f575785b6d2644a763403c634e553bbc3d"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-clear-push.log",
+      "bytes": 108,
+      "sha256": "feb9ef4da1395ea4fe36350e923dcbd791c96dcfd690f7f7788f074b637920bb"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-clippy.log",
+      "bytes": 345,
+      "sha256": "bc051f1245431dc7514e96374ae6a241360f9ceb33a9f46cc4003548893748f0"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-dependency-commit-final.log",
+      "bytes": 16845,
+      "sha256": "04da058ca3437bc40a6b19788292f0c5f8bbedc5ce54869c87bc6e5625b9fe38"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-dependency-commit.log",
+      "bytes": 16807,
+      "sha256": "16caf118de2054afacf443fc3e03d1c2045adcc61168874876dd233bcc7d570e"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-dependency-driver-tests.log",
+      "bytes": 11726,
+      "sha256": "b6cf895e06d5e8e516bd2f332311d689a1fbd58cbf41b1a8738c24dd66f4d6e4"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-dependency-push.log",
+      "bytes": 138,
+      "sha256": "43ebeadd640e03275fb4a67690eeab754c969616254d4a12aae2a59e2b0d0951"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-driver-tests-clear.log",
+      "bytes": 11244,
+      "sha256": "96158e221209f58c627b5f5a79a6a592649d0f34c3d3b56694b88ab6b1f04eaf"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-driver-tests-final.log",
+      "bytes": 13143,
+      "sha256": "443a4799570199e1b2eea32b95b8d891318387c882d36d1f6bcf5c2cac206764"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-driver-tests-repair.log",
+      "bytes": 11052,
+      "sha256": "7d233c6868646bd7728587633049612ddf7240e07c074b5ada2ab01ee5be9219"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-driver-tests-reviewed.log",
+      "bytes": 10838,
+      "sha256": "a2469b68e77a751377a63f880fa4a43e3121e0b6b6fdebf171e1001dfe47285e"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-driver-tests.log",
+      "bytes": 10838,
+      "sha256": "7bc2eb90844d7a916aa879b6fe0ae137b9008572017ce69d432be33492d0ff46"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-fifth-job.log",
+      "bytes": 491048,
+      "sha256": "bcca17f63f0dd1a7c69bcf1b7692e18dd25a34b5afbd9290613a4b5730c491f6"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-first-job.log",
+      "bytes": 487151,
+      "sha256": "e559ed2f8df2738f45de21e25728719045483582519635eeba44ca05ec17a298"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-fixture-build.log",
+      "bytes": 345,
+      "sha256": "1a1937193f1fb82d5caeca7e1c16a3eaa8df58d322d1d83f2b25be8defac9114"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-fixture-local.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-format-check.log",
+      "bytes": 511,
+      "sha256": "08cc0649f2c156ddcecd670c25c56ec05a4112ff796b036cdb5e3c05e947b205"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-format-config.log",
+      "bytes": 44,
+      "sha256": "ba30fef731154d56632b6e7943f49f4e725138fcdea69e6d098d08c5171ac71d"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-format.log",
+      "bytes": 168,
+      "sha256": "f052a462d3e3f33233553fa8d41338ae89a8196661e54a0306ff32faa2a1a063"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-fourth-job.log",
+      "bytes": 487108,
+      "sha256": "ddbb1fd8a5955c3aa6a337255545d7e02906a0d1b9c064207c420b6f27c3e130"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-lint.log",
+      "bytes": 251,
+      "sha256": "92d3d7ad8789d0afe3d4652ecfe8d366c22554db6cd799ad2d6bc244e74b9c42"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-no-download-initial.log",
+      "bytes": 973,
+      "sha256": "7834136de57efc95186f0087f07ffc43971d14fa1daf3230123968fb3569c667"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-no-download-tests.log",
+      "bytes": 905,
+      "sha256": "fcf369e01fbb156adb3e0f2554317a528c2530064facb9127519752c79767f1c"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-no-download.log",
+      "bytes": 546,
+      "sha256": "1e7297da0ccc2431db2669855534c83715792bbc1434dbdfb062ab0cb7d5ab7d"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-publication-access.log",
+      "bytes": 103,
+      "sha256": "93fd5afa0914e9045016d3e7ea2f5b64dc004fda7488f37cdd0358148f00ad40"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-qa-commit-final.log",
+      "bytes": 17419,
+      "sha256": "957f7b4f2c94ae77724ffdb8139ed4afeb6b4800e4aa6f482f64d40e078af1b0"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-qa-commit.log",
+      "bytes": 16285,
+      "sha256": "79118fb0eb6afe992933c7413aadfe1b5f2191bb56a7c28bc1924e31e7753a8a"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-qa-push.log",
+      "bytes": 330,
+      "sha256": "15ab69b05c232a652d90a7a39c9822bb2c802a628d61b4eaaf98c2029d052cd4"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-qa-repair-commit.log",
+      "bytes": 16809,
+      "sha256": "c523dc6eb7c43283d5f67d0eb83c631e02a143da4ee1479c9afba71498f86560"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-qa-repair-push.log",
+      "bytes": 108,
+      "sha256": "b539732016d4a151910bbbf03629ff71797ba5782a086f93415d621337f0f8b5"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-role-commit.log",
+      "bytes": 16806,
+      "sha256": "8f7b0f734473117c1d56a74d28e298d8ecd3f829a5c931590633ba66965821b5"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-role-driver-tests.log",
+      "bytes": 11474,
+      "sha256": "c9c876c02dcfb9f5c86be0659d77d4d042e5b6a9bce62ee9f6dd14010e146a31"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-role-push.log",
+      "bytes": 138,
+      "sha256": "1ae3bca2701f936b53920ae6c3e157c3220c057167b60bf28f0537485608901b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-rustfmt-first.log",
+      "bytes": 1434,
+      "sha256": "faa61163cabaa8901b069854144e1c8373a21a1509875859d5cf30dcefdf032f"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-second-job.log",
+      "bytes": 488744,
+      "sha256": "a155934bd8ce40d4e77195c210c3b591618d45aa1515b548e9e90985fabc6f3f"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-served-host-final.log",
+      "bytes": 72,
+      "sha256": "002ab46d08118bedcc939dab2243f15d500e5dbd3eae6dc9dc37afe8402cbd8b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-served-host.log",
+      "bytes": 158,
+      "sha256": "cf07fb38ec4de7769d1419af9c2c386ab4fa81342f3991ee1303ed5b7dacbae7"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-success-job.log",
+      "bytes": 491051,
+      "sha256": "414ec13d25a6e19b6a2d063058c2b64954c3dd99cf8cd61a32bcc0be0e05f07b"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-third-job.log",
+      "bytes": 489931,
+      "sha256": "8a0fed48ede9f006c9ca12ca1d2544aa752074a2eda50911a3d2e47fa65a4262"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-transport-access.log",
+      "bytes": 144,
+      "sha256": "d3c782b58d4c036d822f049362527a33a6be217cd19c8950ff20dab3082a90ad"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-typecheck.log",
+      "bytes": 762,
+      "sha256": "833f63ff36054361f482d3968222afb31a3637e391b13b2d2291e9f2e4a04798"
+    },
+    {
+      "path": "/workspace/scratch/recalled-facts-native-ui-format-final.log",
+      "bytes": 310,
+      "sha256": "fcbfecd99292f55684c96594b44079eb68ea77cf5d8644e719b10f559562f755"
+    }
+  ],
+  "sealed_admission_files": [
+    {
+      "path": "docs/reports/recalled-facts-native/admission/recalled-facts-native-fixture-admission.json",
+      "bytes": 598,
+      "sha256": "98b8e1652ad66b760305d650847324a5eceadb8d492c2fd1a5cfae55d11e49d6"
+    },
+    {
+      "path": "docs/reports/recalled-facts-native/admission/recalled-facts-native-served-admission.json",
+      "bytes": 436,
+      "sha256": "f6ba996b864e570c1bef94477010774bccd54a20b88176db1348b4e2f43f9af1"
+    },
+    {
+      "path": "docs/reports/recalled-facts-native/admission/recalled-facts-native-pr19-final-custody.json",
+      "bytes": 23683,
+      "sha256": "c673a0ea5fdbfc4d43dbfe937661618d0889313cefc020bbb02ce584efb59811"
+    },
+    {
+      "path": "docs/reports/recalled-facts-native/admission/recalled-facts-native-success-jobs.json",
+      "bytes": 2771,
+      "sha256": "75eaff32883baee3bdc82cf134fcb72dbe56c76ef5f3b23f37bd57d835cc9400"
+    }
+  ],
+  "custody": {
+    "prior_local_evidence_commit": "ece6f1920c875f6d09ad3fe609a7792108e29ea2",
+    "prior_local_manifest_sha256": "dd82acd6bce07bb982beea664fad0b9df2251c794f33df89b3bda16091c7eeac",
+    "pr19_unchanged": {
+      "confirmed": true,
+      "head_sha": "4c468d6386bcad44117fe7e4439202cdde52a0f7",
+      "draft": true,
+      "merged": false
+    },
+    "local_native_blocker": "GTK3/WebKit4.1 unavailable; native execution performed on the existing hosted Linux workflow.",
+    "qa_push_hook_limit": "Normal commit hooks passed. QA branch push used per-command core.hooksPath=/dev/null because local native pre-push setup is unavailable. Hosted workflow ran the native build and complete regression gates.",
+    "model": "Five labelled synthetic HTTP streams; no real-model execution or narrative-quality claim.",
+    "prohibited_changes": "No credential or network-setting changes, model downloads, paid services, reviewer requests, PR edits or merges."
+  }
+}

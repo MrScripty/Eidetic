@@ -1,0 +1,2710 @@
+{
+  "status": "native_recalled_facts_selection_passed_with_labelled_QA_replay_controls",
+  "application_source_sha": "e140290ed4414585c0c507874fab5b0e04c9dc22",
+  "qualification_sha": "81664a3748936f1678655384c498e1aa8515bf82",
+  "application_binary_sha256": "cbf49237cdb3d3f722bf65c9e0dad82f4205f7b33f528034b01ca87997ed154e",
+  "capture_label": "actual native prototype views",
+  "setup_route": "public services only; no model execution in setup",
+  "gui_route": "AT-SPI/X11; graph closed; Bible, timeline and screenplay visible",
+  "provider": "labelled synthetic localhost HTTP/SSE through production client",
+  "recall_model_execution": "none",
+  "real_model_quality_qualified": false,
+  "checkpoints": [
+    {
+      "stage": "public services prepare three scenes and 205 unrelated entities",
+      "elapsed_seconds": 0.206
+    },
+    {
+      "stage": "exact manual B saved and unrelated F draft retained",
+      "elapsed_seconds": 25.671
+    },
+    {
+      "stage": "explicit untimed recall reaches linked Beach House beyond renderer prefix",
+      "elapsed_seconds": 29.258
+    },
+    {
+      "stage": "explicit 999ms recall resolves whole baseline without future assertion",
+      "elapsed_seconds": 31.465
+    },
+    {
+      "stage": "explicit 1000ms recall resolves exact assertion with typed untimed path",
+      "elapsed_seconds": 34.307
+    },
+    {
+      "stage": "native exact fact Save identifies affected screenplay without replacing manual text",
+      "elapsed_seconds": 41.172
+    },
+    {
+      "stage": "Bible mutation revokes prior recall evidence",
+      "elapsed_seconds": 44.179
+    },
+    {
+      "stage": "explicit fresh recall reflects edited canon and leaves existing work unchanged",
+      "elapsed_seconds": 46.371
+    },
+    {
+      "stage": "targeted synthetic proposal visible with explicit acceptance and saved manual B retained",
+      "elapsed_seconds": 52.461
+    },
+    {
+      "stage": "selected far baseline reaches pending proposal; unselected sibling absent from exact HTTP prompt",
+      "elapsed_seconds": 68.079
+    },
+    {
+      "stage": "canonical far-peer mutation clears selection; exact old selection and stale acceptance refuse",
+      "elapsed_seconds": 75.994
+    },
+    {
+      "stage": "fresh selected proposal visibly pending; exact manual target and unrelated draft still retained",
+      "elapsed_seconds": 87.044
+    },
+    {
+      "stage": "explicit fresh Accept updates only target and records selected dependency; unrelated manual/draft text intact",
+      "elapsed_seconds": 90.163
+    },
+    {
+      "stage": "subsequent selected fact edit derives Needs review without replacing accepted text",
+      "elapsed_seconds": 94.159
+    },
+    {
+      "stage": "qualified; explicit acceptance and preservation checks complete",
+      "elapsed_seconds": 94.382
+    }
+  ],
+  "qualification_host": {
+    "pid": 24458,
+    "arguments": [
+      "/home/runner/work/Eidetic/Eidetic/ui/node_modules/.bin/vite",
+      "dev",
+      "--config",
+      "/home/runner/work/Eidetic/Eidetic/scripts/recalled-facts-vite.config.mts",
+      "--port",
+      "5173",
+      "--host",
+      "127.0.0.1",
+      "--strictPort"
+    ],
+    "cwd": "/home/runner/work/Eidetic/Eidetic/ui",
+    "config_sha256": "190c0236ffaba6d66930d2027f12e0795bea83018b87460c1f2e86292b3ff561",
+    "instrumented_native_host": true
+  },
+  "stage": "qualified; explicit acceptance and preservation checks complete",
+  "public_fixture": {
+    "a": {
+      "end_ms": 60000,
+      "id": "2b014b92-ec81-42df-825b-dc39c777a745",
+      "letter": "A",
+      "name": "SCENE A",
+      "start_ms": 0
+    },
+    "b": {
+      "end_ms": 180000,
+      "id": "e4aad582-fd99-4e94-b037-0da3cbe143b9",
+      "letter": "B",
+      "name": "SCENE B",
+      "start_ms": 120000
+    },
+    "f": {
+      "end_ms": 120000,
+      "id": "aca8808a-8c0c-4ed9-96e4-bf5b81289cf9",
+      "letter": "F",
+      "name": "SCENE F",
+      "start_ms": 60000
+    },
+    "filler_count": 205,
+    "mara": "qualification.mara",
+    "model_execution_in_setup": "none",
+    "neighbor": "qualification.beach-house",
+    "project_path": "<fresh qualification project>",
+    "public_recall": {
+      "change_event_id": "7ae9fbd1-bbac-441c-864a-8c9995aa8876",
+      "payload": {
+        "nodes": [
+          {
+            "fields": [
+              {
+                "field_key": "tagline",
+                "part_key": "profile",
+                "source": {
+                  "field_id": "qualification.mara.tagline",
+                  "kind": "baseline",
+                  "revision_event_id": "5f0e9e3c-25c3-4ca7-9a25-ee534c8c808a"
+                },
+                "value": {
+                  "type": "text",
+                  "value": "Mara's umbrella is blue."
+                }
+              }
+            ],
+            "name": "Mara",
+            "name_revision_event_id": "016a3ec7-8634-4f36-b63d-17064deeeada",
+            "node_id": "qualification.mara",
+            "omitted_fields": 0,
+            "schema_key": "character",
+            "unresolved_timed_fields": []
+          },
+          {
+            "fields": [
+              {
+                "field_key": "weather",
+                "part_key": "environment",
+                "source": {
+                  "at_ms": 1000,
+                  "field_revision_event_id": "d7c03336-f65b-4cc0-afb7-75e3258cb173",
+                  "kind": "snapshot",
+                  "label": "Opening",
+                  "snapshot_field_id": "qualification.house.opening.weather",
+                  "snapshot_id": "qualification.house.opening",
+                  "snapshot_revision_event_id": "d7c03336-f65b-4cc0-afb7-75e3258cb173"
+                },
+                "value": {
+                  "type": "text",
+                  "value": "Rain"
+                }
+              }
+            ],
+            "name": "Beach House",
+            "name_revision_event_id": "3b1b71cc-48ea-44b4-a552-ebe0071a40af",
+            "node_id": "qualification.beach-house",
+            "omitted_fields": 0,
+            "schema_key": "location",
+            "unresolved_timed_fields": [
+              {
+                "field_key": "description",
+                "part_key": "environment"
+              }
+            ]
+          },
+          {
+            "fields": [
+              {
+                "field_key": "motivation",
+                "part_key": "profile",
+                "source": {
+                  "field_id": "qualification.keeper.motivation",
+                  "kind": "baseline",
+                  "revision_event_id": "be9eebc1-a79b-4c1e-b9a7-80c0f2883350"
+                },
+                "value": {
+                  "type": "text",
+                  "value": "UNSELECTED brass key in cellar."
+                }
+              },
+              {
+                "field_key": "tagline",
+                "part_key": "profile",
+                "source": {
+                  "field_id": "qualification.keeper.tagline",
+                  "kind": "baseline",
+                  "revision_event_id": "7df0b1c5-60e6-48d8-ad6d-d956dfcc2dc1"
+                },
+                "value": {
+                  "type": "text",
+                  "value": "SELECTED dry roof key \u2014 \u96e8."
+                }
+              }
+            ],
+            "name": "The Keeper",
+            "name_revision_event_id": "0cbb34c5-22f7-410e-b3a0-7a1706a8f74b",
+            "node_id": "qualification.keeper",
+            "omitted_fields": 0,
+            "schema_key": "character",
+            "unresolved_timed_fields": []
+          }
+        ],
+        "omitted_edges": 0,
+        "omitted_neighbors": 0,
+        "paths": [
+          {
+            "neighbor_node_id": "qualification.beach-house",
+            "relationship": {
+              "edge": {
+                "directed": true,
+                "edge_id": "qualification.mara.home",
+                "edge_kind": "located_in",
+                "from_node_id": "qualification.mara",
+                "label": "Mara's home",
+                "to_node_id": "qualification.beach-house"
+              },
+              "revision_event_id": "d71a46fd-9e77-4ed3-927f-3d0f227056ad"
+            }
+          },
+          {
+            "neighbor_node_id": "qualification.keeper",
+            "relationship": {
+              "edge": {
+                "directed": true,
+                "edge_id": "qualification.mara.keeper",
+                "edge_kind": {
+                  "custom": "trusted contact"
+                },
+                "from_node_id": "qualification.mara",
+                "label": "Mara trusts the Keeper",
+                "to_node_id": "qualification.keeper"
+              },
+              "revision_event_id": "7ae9fbd1-bbac-441c-864a-8c9995aa8876"
+            }
+          }
+        ],
+        "relationships_untimed": true,
+        "request": {
+          "anchor_node_id": "qualification.mara",
+          "direction": "both",
+          "edge_kinds": [],
+          "neighbor_limit": 8,
+          "story_time_ms": 1000
+        }
+      },
+      "version": 225
+    },
+    "scenes": [
+      {
+        "end_ms": 60000,
+        "id": "2b014b92-ec81-42df-825b-dc39c777a745",
+        "letter": "A",
+        "name": "SCENE A",
+        "start_ms": 0
+      },
+      {
+        "end_ms": 120000,
+        "id": "aca8808a-8c0c-4ed9-96e4-bf5b81289cf9",
+        "letter": "F",
+        "name": "SCENE F",
+        "start_ms": 60000
+      },
+      {
+        "end_ms": 180000,
+        "id": "e4aad582-fd99-4e94-b037-0da3cbe143b9",
+        "letter": "B",
+        "name": "SCENE B",
+        "start_ms": 120000
+      }
+    ],
+    "selected_peer": "qualification.keeper",
+    "setup_route": "public services only; exact manual A/F supporting text, native B generation/edit after launch"
+  },
+  "window_id": 2097155,
+  "window_pid": 24500,
+  "native_window_geometry": "WINDOW=2097155\nX=0\nY=0\nWIDTH=1920\nHEIGHT=1440\nSCREEN=0",
+  "generation": {
+    "actual_GUI_Generate": true,
+    "real_model": false,
+    "block_id": "script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated",
+    "revision_event_id": "07af7058-5578-4e2b-8559-fa28d9ffde42"
+  },
+  "saved_manual_B": {
+    "exact_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+    "block_id": "script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated",
+    "revision_event_id": "dc42a2f6-e566-4095-b818-69c15e43b33d"
+  },
+  "retained_F_draft": {
+    "exact_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+    "not_saved": true,
+    "saved_F_text": "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n"
+  },
+  "untimed_recall": {
+    "anchor": "qualification.mara",
+    "neighbor": "qualification.beach-house",
+    "exact_UI_unresolved": "Unresolved: environment.weather",
+    "story_time_ms": null,
+    "canonical_history_unchanged": true
+  },
+  "timed_recall": {
+    "story_time_ms": 1000,
+    "exact_UI_value": "environment.weather: Rain",
+    "typed_path": "Mara \u2192 Beach House \u00b7 located in",
+    "relationships_untimed": true,
+    "canonical_history_unchanged": true,
+    "source_disclosure_visible": true
+  },
+  "manual_fact_edit": {
+    "before": "Mara's umbrella is blue.",
+    "after": "Mara's umbrella is amber.",
+    "original_revision_event_id": "5f0e9e3c-25c3-4ca7-9a25-ee534c8c808a",
+    "current_revision_event_id": "4e3726ee-0d70-46bd-a7c9-7a0f0a88bb86",
+    "saved_screenplay_unchanged": true,
+    "unrelated_draft_retained": true,
+    "visible_review": {
+      "expected_label": "Bible fact profile.tagline changed.",
+      "native_name": "Bible fact profile.tagline changed. Mara's umbrella is blue.",
+      "native_text": "Bible fact profile.tagline changed.\nMara's umbrella is blue.\n",
+      "role": "list item",
+      "bounds": [
+        301,
+        757,
+        396,
+        37
+      ],
+      "viewport": [
+        280,
+        208,
+        1314,
+        836
+      ]
+    }
+  },
+  "refreshed_recall": {
+    "exact_anchor_value": "Mara's umbrella is amber.",
+    "story_time_ms": 1000,
+    "canonical_history_unchanged": true
+  },
+  "pending_preview": {
+    "proposal_id": "script.review.2c0cf4da-0a5a-4080-a383-45507d616747",
+    "proposed_text": "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n",
+    "status": "pending",
+    "real_model": false,
+    "visible_proposal": {
+      "viewport": [
+        280,
+        208,
+        1314,
+        836
+      ],
+      "character_bounds": [
+        [
+          739,
+          355,
+          8,
+          12
+        ],
+        [
+          746,
+          355,
+          8,
+          12
+        ],
+        [
+          753,
+          355,
+          8,
+          12
+        ],
+        [
+          760,
+          355,
+          8,
+          12
+        ],
+        [
+          767,
+          355,
+          8,
+          12
+        ],
+        [
+          774,
+          355,
+          8,
+          12
+        ],
+        [
+          781,
+          355,
+          8,
+          12
+        ],
+        [
+          788,
+          355,
+          8,
+          12
+        ],
+        [
+          795,
+          355,
+          8,
+          12
+        ],
+        [
+          809,
+          355,
+          8,
+          12
+        ],
+        [
+          816,
+          355,
+          8,
+          12
+        ],
+        [
+          823,
+          355,
+          8,
+          12
+        ],
+        [
+          830,
+          355,
+          8,
+          12
+        ],
+        [
+          837,
+          355,
+          8,
+          12
+        ],
+        [
+          844,
+          355,
+          8,
+          12
+        ],
+        [
+          851,
+          355,
+          8,
+          12
+        ],
+        [
+          858,
+          355,
+          8,
+          12
+        ],
+        [
+          872,
+          355,
+          8,
+          12
+        ],
+        [
+          879,
+          355,
+          8,
+          12
+        ],
+        [
+          886,
+          355,
+          8,
+          12
+        ],
+        [
+          893,
+          355,
+          8,
+          12
+        ],
+        [
+          907,
+          355,
+          8,
+          12
+        ],
+        [
+          914,
+          355,
+          8,
+          12
+        ],
+        [
+          921,
+          355,
+          8,
+          12
+        ],
+        [
+          928,
+          355,
+          8,
+          12
+        ],
+        [
+          935,
+          355,
+          8,
+          12
+        ],
+        [
+          949,
+          355,
+          8,
+          12
+        ],
+        [
+          956,
+          355,
+          8,
+          12
+        ],
+        [
+          963,
+          355,
+          8,
+          12
+        ],
+        [
+          977,
+          355,
+          8,
+          12
+        ],
+        [
+          984,
+          355,
+          8,
+          12
+        ],
+        [
+          991,
+          355,
+          8,
+          12
+        ],
+        [
+          1005,
+          355,
+          8,
+          12
+        ],
+        [
+          1012,
+          355,
+          8,
+          12
+        ],
+        [
+          1019,
+          355,
+          8,
+          12
+        ],
+        [
+          1026,
+          355,
+          8,
+          12
+        ],
+        [
+          1040,
+          355,
+          8,
+          12
+        ],
+        [
+          1047,
+          355,
+          8,
+          12
+        ],
+        [
+          1054,
+          355,
+          8,
+          12
+        ],
+        [
+          1068,
+          355,
+          8,
+          12
+        ],
+        [
+          1075,
+          355,
+          8,
+          12
+        ],
+        [
+          1082,
+          355,
+          8,
+          12
+        ],
+        [
+          1089,
+          355,
+          8,
+          12
+        ],
+        [
+          1096,
+          355,
+          8,
+          12
+        ],
+        [
+          739,
+          367,
+          8,
+          16
+        ],
+        [
+          746,
+          367,
+          8,
+          16
+        ],
+        [
+          753,
+          367,
+          8,
+          16
+        ],
+        [
+          760,
+          367,
+          8,
+          16
+        ],
+        [
+          767,
+          367,
+          8,
+          16
+        ],
+        [
+          774,
+          367,
+          8,
+          16
+        ],
+        [
+          781,
+          367,
+          8,
+          16
+        ],
+        [
+          788,
+          367,
+          8,
+          16
+        ],
+        [
+          795,
+          367,
+          8,
+          16
+        ],
+        [
+          809,
+          367,
+          8,
+          16
+        ],
+        [
+          816,
+          367,
+          8,
+          16
+        ],
+        [
+          823,
+          367,
+          8,
+          16
+        ],
+        [
+          830,
+          367,
+          8,
+          16
+        ],
+        [
+          837,
+          367,
+          8,
+          16
+        ],
+        [
+          844,
+          367,
+          8,
+          16
+        ],
+        [
+          851,
+          367,
+          8,
+          16
+        ],
+        [
+          858,
+          367,
+          8,
+          16
+        ],
+        [
+          872,
+          367,
+          8,
+          16
+        ],
+        [
+          879,
+          367,
+          8,
+          16
+        ],
+        [
+          886,
+          367,
+          8,
+          16
+        ],
+        [
+          893,
+          367,
+          8,
+          16
+        ],
+        [
+          907,
+          367,
+          8,
+          16
+        ],
+        [
+          914,
+          367,
+          8,
+          16
+        ],
+        [
+          921,
+          367,
+          8,
+          16
+        ],
+        [
+          928,
+          367,
+          8,
+          16
+        ],
+        [
+          935,
+          367,
+          8,
+          16
+        ],
+        [
+          942,
+          367,
+          8,
+          16
+        ],
+        [
+          949,
+          367,
+          8,
+          16
+        ],
+        [
+          963,
+          367,
+          8,
+          16
+        ],
+        [
+          970,
+          367,
+          8,
+          16
+        ],
+        [
+          977,
+          367,
+          8,
+          16
+        ],
+        [
+          984,
+          367,
+          8,
+          16
+        ],
+        [
+          991,
+          367,
+          8,
+          16
+        ]
+      ],
+      "exact_text": "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n",
+      "native_text_geometry_inside_script": true,
+      "pending_controls": [
+        {
+          "name": "Reject",
+          "bounds": [
+            739,
+            417,
+            35,
+            16
+          ]
+        },
+        {
+          "name": "Accept update",
+          "bounds": [
+            783,
+            417,
+            82,
+            16
+          ]
+        }
+      ]
+    }
+  },
+  "captures": [
+    {
+      "file": "eidetic-bible-recall-pending-review.png",
+      "sha256": "5635df0c30e1ad821b250a972f57df8da6182881c6608f5a5147baafef44fbb9",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-baseline-selected.png",
+      "sha256": "1b63c5af6fac87ccb3bc8d15715a2058980655292702772e0b4f443628429914",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-selected-pending.png",
+      "sha256": "18ab44fba214d5acda645b08f0d6a526d6954227555d36259a70965a345b8139",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-stale-refused.png",
+      "sha256": "b7f5c4e28a76158be9d32885f9077c9614ea4aa1cf7e584b39b5f80489c08e3b",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-fresh-selected.png",
+      "sha256": "7c54e9898693ebd7c9efca46e7510863d524b756c3d97998435f96c5607aee8e",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-fresh-pending.png",
+      "sha256": "2936d75e9d34d992db827a651758d040129e57b61e85213d0d6852cf72c8625b",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-accepted.png",
+      "sha256": "9dfc957333fbdd7d238a62a70d0a1d5be1a3c0f2249f614f625f28cbe0467bfb",
+      "window_id": 2097155,
+      "pid": 24500
+    },
+    {
+      "file": "eidetic-recalled-facts-subsequent-impact.png",
+      "sha256": "f76219fe8f28b0a537b1bf0be42d2e58718cc62a3601ecc64bd9092c5721d360",
+      "window_id": 2097155,
+      "pid": 24500
+    }
+  ],
+  "selected_fact_test_build": {
+    "label": "qualifier-only public-command mutation and saved-selector replay controls",
+    "production_files_changed": false,
+    "DOM_or_IPC_injection": false,
+    "direct_database_writes": false,
+    "real_model": false,
+    "ordinary_native_controls": [
+      "fact checkboxes",
+      "Preview update",
+      "Reject",
+      "Accept update"
+    ],
+    "QA_controls": [
+      "mutate far-peer fact through unchanged public command",
+      "replay exact old selector through unchanged public preview command"
+    ]
+  },
+  "selected_fact_checks": [
+    {
+      "label": "normal native baseline selection",
+      "control": {
+        "name": "The Keeper \u00b7 profile.tagline: \"SELECTED dry roof key \u2014 \u96e8.\"",
+        "checked": true,
+        "summary": "Use recalled facts for this preview (1/8 selected)"
+      }
+    },
+    {
+      "label": "pending selected preview canonical custody",
+      "proposal_id": "script.review.a784e6d4-c884-4700-bd60-f3305bb66090",
+      "selection": {
+        "query": {
+          "anchor_node_id": "qualification.mara",
+          "story_time_ms": null,
+          "direction": "both",
+          "edge_kinds": [],
+          "neighbor_limit": 8
+        },
+        "facts": [
+          {
+            "node_id": "qualification.keeper",
+            "part_key": "profile",
+            "field_key": "tagline",
+            "field_id": "qualification.keeper.tagline",
+            "revision_event_id": "7df0b1c5-60e6-48d8-ad6d-d956dfcc2dc1"
+          }
+        ],
+        "names": [
+          {
+            "node_id": "qualification.keeper",
+            "name": "The Keeper",
+            "revision_event_id": "0cbb34c5-22f7-410e-b3a0-7a1706a8f74b"
+          },
+          {
+            "node_id": "qualification.mara",
+            "name": "Mara",
+            "revision_event_id": "016a3ec7-8634-4f36-b63d-17064deeeada"
+          }
+        ],
+        "paths": [
+          {
+            "neighbor_node_id": "qualification.keeper",
+            "relationship": {
+              "edge": {
+                "edge_id": "qualification.mara.keeper",
+                "from_node_id": "qualification.mara",
+                "to_node_id": "qualification.keeper",
+                "edge_kind": {
+                  "custom": "trusted contact"
+                },
+                "label": "Mara trusts the Keeper",
+                "directed": true
+              },
+              "revision_event_id": "7ae9fbd1-bbac-441c-864a-8c9995aa8876"
+            }
+          }
+        ]
+      },
+      "canonical_consumed_field": {
+        "node_id": "qualification.keeper",
+        "part_key": "profile",
+        "field_key": "tagline",
+        "field_id": "qualification.keeper.tagline",
+        "revision_event_id": "7df0b1c5-60e6-48d8-ad6d-d956dfcc2dc1",
+        "value": {
+          "type": "text",
+          "value": "SELECTED dry roof key \u2014 \u96e8."
+        }
+      },
+      "visible_proposal": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            739,
+            443,
+            8,
+            12
+          ],
+          [
+            746,
+            443,
+            8,
+            12
+          ],
+          [
+            753,
+            443,
+            8,
+            12
+          ],
+          [
+            760,
+            443,
+            8,
+            12
+          ],
+          [
+            767,
+            443,
+            8,
+            12
+          ],
+          [
+            774,
+            443,
+            8,
+            12
+          ],
+          [
+            781,
+            443,
+            8,
+            12
+          ],
+          [
+            788,
+            443,
+            8,
+            12
+          ],
+          [
+            795,
+            443,
+            8,
+            12
+          ],
+          [
+            809,
+            443,
+            8,
+            12
+          ],
+          [
+            816,
+            443,
+            8,
+            12
+          ],
+          [
+            823,
+            443,
+            8,
+            12
+          ],
+          [
+            830,
+            443,
+            8,
+            12
+          ],
+          [
+            837,
+            443,
+            8,
+            12
+          ],
+          [
+            844,
+            443,
+            8,
+            12
+          ],
+          [
+            851,
+            443,
+            8,
+            12
+          ],
+          [
+            858,
+            443,
+            8,
+            12
+          ],
+          [
+            865,
+            443,
+            8,
+            12
+          ],
+          [
+            872,
+            443,
+            8,
+            12
+          ],
+          [
+            879,
+            443,
+            8,
+            12
+          ],
+          [
+            886,
+            443,
+            8,
+            12
+          ],
+          [
+            893,
+            443,
+            8,
+            12
+          ],
+          [
+            907,
+            443,
+            8,
+            12
+          ],
+          [
+            914,
+            443,
+            8,
+            12
+          ],
+          [
+            921,
+            443,
+            8,
+            12
+          ],
+          [
+            928,
+            443,
+            8,
+            12
+          ],
+          [
+            935,
+            443,
+            8,
+            12
+          ],
+          [
+            942,
+            443,
+            8,
+            12
+          ],
+          [
+            949,
+            443,
+            8,
+            12
+          ],
+          [
+            956,
+            443,
+            8,
+            12
+          ],
+          [
+            970,
+            443,
+            8,
+            12
+          ],
+          [
+            977,
+            443,
+            8,
+            12
+          ],
+          [
+            984,
+            443,
+            8,
+            12
+          ],
+          [
+            991,
+            443,
+            8,
+            12
+          ],
+          [
+            1005,
+            443,
+            8,
+            12
+          ],
+          [
+            1012,
+            443,
+            8,
+            12
+          ],
+          [
+            1019,
+            443,
+            8,
+            12
+          ],
+          [
+            1026,
+            443,
+            8,
+            12
+          ],
+          [
+            1033,
+            443,
+            8,
+            12
+          ],
+          [
+            1040,
+            443,
+            8,
+            12
+          ],
+          [
+            1047,
+            443,
+            8,
+            12
+          ],
+          [
+            1054,
+            443,
+            8,
+            12
+          ],
+          [
+            1068,
+            443,
+            8,
+            12
+          ],
+          [
+            1075,
+            443,
+            8,
+            12
+          ],
+          [
+            1082,
+            443,
+            8,
+            12
+          ],
+          [
+            739,
+            455,
+            8,
+            16
+          ],
+          [
+            746,
+            455,
+            8,
+            16
+          ],
+          [
+            753,
+            455,
+            8,
+            16
+          ],
+          [
+            760,
+            455,
+            8,
+            16
+          ],
+          [
+            767,
+            455,
+            8,
+            16
+          ],
+          [
+            774,
+            455,
+            8,
+            16
+          ],
+          [
+            781,
+            455,
+            8,
+            16
+          ],
+          [
+            795,
+            455,
+            8,
+            16
+          ],
+          [
+            802,
+            455,
+            8,
+            16
+          ],
+          [
+            809,
+            455,
+            8,
+            16
+          ],
+          [
+            823,
+            455,
+            8,
+            16
+          ],
+          [
+            830,
+            455,
+            8,
+            16
+          ],
+          [
+            837,
+            455,
+            8,
+            16
+          ],
+          [
+            851,
+            455,
+            8,
+            16
+          ],
+          [
+            858,
+            455,
+            8,
+            16
+          ],
+          [
+            865,
+            455,
+            8,
+            16
+          ],
+          [
+            879,
+            455,
+            8,
+            16
+          ],
+          [
+            886,
+            455,
+            8,
+            16
+          ],
+          [
+            893,
+            455,
+            8,
+            16
+          ],
+          [
+            900,
+            455,
+            8,
+            16
+          ],
+          [
+            914,
+            455,
+            8,
+            16
+          ],
+          [
+            921,
+            455,
+            8,
+            16
+          ],
+          [
+            928,
+            455,
+            8,
+            16
+          ],
+          [
+            935,
+            455,
+            8,
+            16
+          ]
+        ],
+        "exact_text": "Synthetic selected-fact preview: Mara protects the witness and the dry roof key.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              739,
+              537,
+              35,
+              16
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              783,
+              537,
+              82,
+              16
+            ]
+          }
+        ]
+      },
+      "visible_proposal_after_receipt_open": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            739,
+            443,
+            8,
+            12
+          ],
+          [
+            746,
+            443,
+            8,
+            12
+          ],
+          [
+            753,
+            443,
+            8,
+            12
+          ],
+          [
+            760,
+            443,
+            8,
+            12
+          ],
+          [
+            767,
+            443,
+            8,
+            12
+          ],
+          [
+            774,
+            443,
+            8,
+            12
+          ],
+          [
+            781,
+            443,
+            8,
+            12
+          ],
+          [
+            788,
+            443,
+            8,
+            12
+          ],
+          [
+            795,
+            443,
+            8,
+            12
+          ],
+          [
+            809,
+            443,
+            8,
+            12
+          ],
+          [
+            816,
+            443,
+            8,
+            12
+          ],
+          [
+            823,
+            443,
+            8,
+            12
+          ],
+          [
+            830,
+            443,
+            8,
+            12
+          ],
+          [
+            837,
+            443,
+            8,
+            12
+          ],
+          [
+            844,
+            443,
+            8,
+            12
+          ],
+          [
+            851,
+            443,
+            8,
+            12
+          ],
+          [
+            858,
+            443,
+            8,
+            12
+          ],
+          [
+            865,
+            443,
+            8,
+            12
+          ],
+          [
+            872,
+            443,
+            8,
+            12
+          ],
+          [
+            879,
+            443,
+            8,
+            12
+          ],
+          [
+            886,
+            443,
+            8,
+            12
+          ],
+          [
+            893,
+            443,
+            8,
+            12
+          ],
+          [
+            907,
+            443,
+            8,
+            12
+          ],
+          [
+            914,
+            443,
+            8,
+            12
+          ],
+          [
+            921,
+            443,
+            8,
+            12
+          ],
+          [
+            928,
+            443,
+            8,
+            12
+          ],
+          [
+            935,
+            443,
+            8,
+            12
+          ],
+          [
+            942,
+            443,
+            8,
+            12
+          ],
+          [
+            949,
+            443,
+            8,
+            12
+          ],
+          [
+            956,
+            443,
+            8,
+            12
+          ],
+          [
+            970,
+            443,
+            8,
+            12
+          ],
+          [
+            977,
+            443,
+            8,
+            12
+          ],
+          [
+            984,
+            443,
+            8,
+            12
+          ],
+          [
+            991,
+            443,
+            8,
+            12
+          ],
+          [
+            1005,
+            443,
+            8,
+            12
+          ],
+          [
+            1012,
+            443,
+            8,
+            12
+          ],
+          [
+            1019,
+            443,
+            8,
+            12
+          ],
+          [
+            1026,
+            443,
+            8,
+            12
+          ],
+          [
+            1033,
+            443,
+            8,
+            12
+          ],
+          [
+            1040,
+            443,
+            8,
+            12
+          ],
+          [
+            1047,
+            443,
+            8,
+            12
+          ],
+          [
+            1054,
+            443,
+            8,
+            12
+          ],
+          [
+            1068,
+            443,
+            8,
+            12
+          ],
+          [
+            1075,
+            443,
+            8,
+            12
+          ],
+          [
+            1082,
+            443,
+            8,
+            12
+          ],
+          [
+            739,
+            455,
+            8,
+            16
+          ],
+          [
+            746,
+            455,
+            8,
+            16
+          ],
+          [
+            753,
+            455,
+            8,
+            16
+          ],
+          [
+            760,
+            455,
+            8,
+            16
+          ],
+          [
+            767,
+            455,
+            8,
+            16
+          ],
+          [
+            774,
+            455,
+            8,
+            16
+          ],
+          [
+            781,
+            455,
+            8,
+            16
+          ],
+          [
+            795,
+            455,
+            8,
+            16
+          ],
+          [
+            802,
+            455,
+            8,
+            16
+          ],
+          [
+            809,
+            455,
+            8,
+            16
+          ],
+          [
+            823,
+            455,
+            8,
+            16
+          ],
+          [
+            830,
+            455,
+            8,
+            16
+          ],
+          [
+            837,
+            455,
+            8,
+            16
+          ],
+          [
+            851,
+            455,
+            8,
+            16
+          ],
+          [
+            858,
+            455,
+            8,
+            16
+          ],
+          [
+            865,
+            455,
+            8,
+            16
+          ],
+          [
+            879,
+            455,
+            8,
+            16
+          ],
+          [
+            886,
+            455,
+            8,
+            16
+          ],
+          [
+            893,
+            455,
+            8,
+            16
+          ],
+          [
+            900,
+            455,
+            8,
+            16
+          ],
+          [
+            914,
+            455,
+            8,
+            16
+          ],
+          [
+            921,
+            455,
+            8,
+            16
+          ],
+          [
+            928,
+            455,
+            8,
+            16
+          ],
+          [
+            935,
+            455,
+            8,
+            16
+          ]
+        ],
+        "exact_text": "Synthetic selected-fact preview: Mara protects the witness and the dry roof key.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              739,
+              617,
+              35,
+              16
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              783,
+              617,
+              82,
+              16
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "stale selection and acceptance refused",
+      "before_fact": [
+        "SELECTED dry roof key \u2014 \u96e8.",
+        "7df0b1c5-60e6-48d8-ad6d-d956dfcc2dc1"
+      ],
+      "after_fact": [
+        "SELECTED copper roof key \u2014 \u96e8.",
+        "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6"
+      ],
+      "selection_counter": "Use recalled facts for this preview (0/8 selected)",
+      "actual_QA_receipt": {
+        "fixture": "qualifier-only public-command mutation and exact stale-selector replay; synthetic provider replies",
+        "capturedRequest": "{\"proposal_id\":\"script.review.a784e6d4-c884-4700-bd60-f3305bb66090\",\"document_id\":\"script.document.main\",\"segment_id\":\"script.segment.e4aad582-fd99-4e94-b037-0da3cbe143b9\",\"block_id\":\"script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated\",\"expected_block_revision_event_id\":\"dc42a2f6-e566-4095-b818-69c15e43b33d\",\"generation_event_id\":\"07af7058-5578-4e2b-8559-fa28d9ffde42\",\"dependency_id\":\"generation.07af7058-5578-4e2b-8559-fa28d9ffde42.bible.4\",\"story_time_ms\":null,\"recall_selection\":{\"query\":{\"anchor_node_id\":\"qualification.mara\",\"story_time_ms\":null,\"direction\":\"both\",\"edge_kinds\":[],\"neighbor_limit\":8},\"facts\":[{\"node_id\":\"qualification.keeper\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.keeper.tagline\",\"revision_event_id\":\"7df0b1c5-60e6-48d8-ad6d-d956dfcc2dc1\"}],\"names\":[{\"node_id\":\"qualification.keeper\",\"name\":\"The Keeper\",\"revision_event_id\":\"0cbb34c5-22f7-410e-b3a0-7a1706a8f74b\"},{\"node_id\":\"qualification.mara\",\"name\":\"Mara\",\"revision_event_id\":\"016a3ec7-8634-4f36-b63d-17064deeeada\"}],\"paths\":[{\"neighbor_node_id\":\"qualification.keeper\",\"relationship\":{\"revision_event_id\":\"7ae9fbd1-bbac-441c-864a-8c9995aa8876\",\"edge\":{\"edge_id\":\"qualification.mara.keeper\",\"from_node_id\":\"qualification.mara\",\"to_node_id\":\"qualification.keeper\",\"edge_kind\":{\"custom\":\"trusted contact\"},\"label\":\"Mara trusts the Keeper\",\"directed\":true}}}]}}",
+        "busy": false,
+        "mutations": 1,
+        "replay": "Actual backend refusal: invalid value: Selected recall evidence is stale or unavailable. Recall again and select up to eight resolved baseline facts at unspecified story time; timed, unresolved and omitted facts cannot be used.",
+        "error": "",
+        "recallVersion": null,
+        "recallInvalidated": true
+      },
+      "ordinary_acceptance_error": "Selected recall evidence is stale or unavailable. Recall again and select up to eight resolved baseline facts at unspecified story time; timed, unresolved and omitted facts cannot be used.",
+      "ordinary_acceptance_error_role": "notification",
+      "provider_calls_unchanged": true,
+      "pending_columns_unchanged": true
+    },
+    {
+      "label": "fresh explicit selection",
+      "control": {
+        "name": "The Keeper \u00b7 profile.tagline: \"SELECTED copper roof key \u2014 \u96e8.\"",
+        "checked": true,
+        "summary": "Use recalled facts for this preview (1/8 selected)"
+      }
+    },
+    {
+      "label": "fresh canonical selected custody",
+      "proposal_id": "script.review.cfa99e34-c757-489f-9b79-fafc8d0c3105",
+      "selection": {
+        "query": {
+          "anchor_node_id": "qualification.mara",
+          "story_time_ms": null,
+          "direction": "both",
+          "edge_kinds": [],
+          "neighbor_limit": 8
+        },
+        "facts": [
+          {
+            "node_id": "qualification.keeper",
+            "part_key": "profile",
+            "field_key": "tagline",
+            "field_id": "qualification.keeper.tagline",
+            "revision_event_id": "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6"
+          }
+        ],
+        "names": [
+          {
+            "node_id": "qualification.keeper",
+            "name": "The Keeper",
+            "revision_event_id": "0cbb34c5-22f7-410e-b3a0-7a1706a8f74b"
+          },
+          {
+            "node_id": "qualification.mara",
+            "name": "Mara",
+            "revision_event_id": "016a3ec7-8634-4f36-b63d-17064deeeada"
+          }
+        ],
+        "paths": [
+          {
+            "neighbor_node_id": "qualification.keeper",
+            "relationship": {
+              "edge": {
+                "edge_id": "qualification.mara.keeper",
+                "from_node_id": "qualification.mara",
+                "to_node_id": "qualification.keeper",
+                "edge_kind": {
+                  "custom": "trusted contact"
+                },
+                "label": "Mara trusts the Keeper",
+                "directed": true
+              },
+              "revision_event_id": "7ae9fbd1-bbac-441c-864a-8c9995aa8876"
+            }
+          }
+        ]
+      },
+      "canonical_consumed_field": {
+        "node_id": "qualification.keeper",
+        "part_key": "profile",
+        "field_key": "tagline",
+        "field_id": "qualification.keeper.tagline",
+        "revision_event_id": "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6",
+        "value": {
+          "type": "text",
+          "value": "SELECTED copper roof key \u2014 \u96e8."
+        }
+      },
+      "visible_proposal": {
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ],
+        "character_bounds": [
+          [
+            739,
+            643,
+            8,
+            12
+          ],
+          [
+            746,
+            643,
+            8,
+            12
+          ],
+          [
+            753,
+            643,
+            8,
+            12
+          ],
+          [
+            760,
+            643,
+            8,
+            12
+          ],
+          [
+            767,
+            643,
+            8,
+            12
+          ],
+          [
+            774,
+            643,
+            8,
+            12
+          ],
+          [
+            781,
+            643,
+            8,
+            12
+          ],
+          [
+            788,
+            643,
+            8,
+            12
+          ],
+          [
+            795,
+            643,
+            8,
+            12
+          ],
+          [
+            809,
+            643,
+            8,
+            12
+          ],
+          [
+            816,
+            643,
+            8,
+            12
+          ],
+          [
+            823,
+            643,
+            8,
+            12
+          ],
+          [
+            830,
+            643,
+            8,
+            12
+          ],
+          [
+            837,
+            643,
+            8,
+            12
+          ],
+          [
+            851,
+            643,
+            8,
+            12
+          ],
+          [
+            858,
+            643,
+            8,
+            12
+          ],
+          [
+            865,
+            643,
+            8,
+            12
+          ],
+          [
+            872,
+            643,
+            8,
+            12
+          ],
+          [
+            879,
+            643,
+            8,
+            12
+          ],
+          [
+            886,
+            643,
+            8,
+            12
+          ],
+          [
+            893,
+            643,
+            8,
+            12
+          ],
+          [
+            900,
+            643,
+            8,
+            12
+          ],
+          [
+            907,
+            643,
+            8,
+            12
+          ],
+          [
+            914,
+            643,
+            8,
+            12
+          ],
+          [
+            921,
+            643,
+            8,
+            12
+          ],
+          [
+            928,
+            643,
+            8,
+            12
+          ],
+          [
+            935,
+            643,
+            8,
+            12
+          ],
+          [
+            949,
+            643,
+            8,
+            12
+          ],
+          [
+            956,
+            643,
+            8,
+            12
+          ],
+          [
+            963,
+            643,
+            8,
+            12
+          ],
+          [
+            970,
+            643,
+            8,
+            12
+          ],
+          [
+            977,
+            643,
+            8,
+            12
+          ],
+          [
+            984,
+            643,
+            8,
+            12
+          ],
+          [
+            991,
+            643,
+            8,
+            12
+          ],
+          [
+            998,
+            643,
+            8,
+            12
+          ],
+          [
+            1012,
+            643,
+            8,
+            12
+          ],
+          [
+            1019,
+            643,
+            8,
+            12
+          ],
+          [
+            1026,
+            643,
+            8,
+            12
+          ],
+          [
+            1033,
+            643,
+            8,
+            12
+          ],
+          [
+            1047,
+            643,
+            8,
+            12
+          ],
+          [
+            1054,
+            643,
+            8,
+            12
+          ],
+          [
+            1061,
+            643,
+            8,
+            12
+          ],
+          [
+            1068,
+            643,
+            8,
+            12
+          ],
+          [
+            1075,
+            643,
+            8,
+            12
+          ],
+          [
+            1082,
+            643,
+            8,
+            12
+          ],
+          [
+            1089,
+            643,
+            8,
+            12
+          ],
+          [
+            1096,
+            643,
+            8,
+            12
+          ],
+          [
+            1110,
+            643,
+            8,
+            12
+          ],
+          [
+            1117,
+            643,
+            8,
+            12
+          ],
+          [
+            1124,
+            643,
+            8,
+            12
+          ],
+          [
+            739,
+            655,
+            8,
+            16
+          ],
+          [
+            746,
+            655,
+            8,
+            16
+          ],
+          [
+            753,
+            655,
+            8,
+            16
+          ],
+          [
+            760,
+            655,
+            8,
+            16
+          ],
+          [
+            767,
+            655,
+            8,
+            16
+          ],
+          [
+            774,
+            655,
+            8,
+            16
+          ],
+          [
+            781,
+            655,
+            8,
+            16
+          ],
+          [
+            795,
+            655,
+            8,
+            16
+          ],
+          [
+            802,
+            655,
+            8,
+            16
+          ],
+          [
+            809,
+            655,
+            8,
+            16
+          ],
+          [
+            823,
+            655,
+            8,
+            16
+          ],
+          [
+            830,
+            655,
+            8,
+            16
+          ],
+          [
+            837,
+            655,
+            8,
+            16
+          ],
+          [
+            851,
+            655,
+            8,
+            16
+          ],
+          [
+            858,
+            655,
+            8,
+            16
+          ],
+          [
+            865,
+            655,
+            8,
+            16
+          ],
+          [
+            872,
+            655,
+            8,
+            16
+          ],
+          [
+            879,
+            655,
+            8,
+            16
+          ],
+          [
+            886,
+            655,
+            8,
+            16
+          ],
+          [
+            900,
+            655,
+            8,
+            16
+          ],
+          [
+            907,
+            655,
+            8,
+            16
+          ],
+          [
+            914,
+            655,
+            8,
+            16
+          ],
+          [
+            921,
+            655,
+            8,
+            16
+          ],
+          [
+            935,
+            655,
+            8,
+            16
+          ],
+          [
+            942,
+            655,
+            8,
+            16
+          ],
+          [
+            949,
+            655,
+            8,
+            16
+          ],
+          [
+            956,
+            655,
+            8,
+            16
+          ]
+        ],
+        "exact_text": "Synthetic fresh selected-fact preview: Mara protects the witness and the copper roof key.\n\n",
+        "native_text_geometry_inside_script": true,
+        "pending_controls": [
+          {
+            "name": "Reject",
+            "bounds": [
+              739,
+              737,
+              35,
+              16
+            ]
+          },
+          {
+            "name": "Accept update",
+            "bounds": [
+              783,
+              737,
+              82,
+              16
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "explicit native fresh acceptance",
+      "proposal_id": "script.review.cfa99e34-c757-489f-9b79-fafc8d0c3105",
+      "accepted_block": [
+        "script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated",
+        "Synthetic fresh selected-fact preview: Mara protects the witness and the copper roof key.\n\n",
+        "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb",
+        120000,
+        180000
+      ],
+      "selected_dependencies": [
+        [
+          "generation.e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb.bible.6",
+          "qualification.keeper.tagline",
+          "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6",
+          "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb"
+        ]
+      ],
+      "unrelated_saved_A_F_preserved": true,
+      "exact_F_draft_preserved": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "placement_preserved": true
+    },
+    {
+      "label": "later consumed-fact edit derives review without replacement",
+      "visible_cause": {
+        "expected_label": "Bible fact profile.tagline changed.",
+        "native_name": "Bible fact profile.tagline changed. SELECTED copper roof key \u2014 \u96e8.",
+        "native_text": "Bible fact profile.tagline changed.\nSELECTED copper roof key \u2014 \u96e8.\n",
+        "role": "list item",
+        "bounds": [
+          301,
+          757,
+          396,
+          37
+        ],
+        "viewport": [
+          280,
+          208,
+          1314,
+          836
+        ]
+      },
+      "after_fact": [
+        "SELECTED final roof key \u2014 \u96e8.",
+        "19df2167-97ef-4a4a-b119-1529a0d4ae1c"
+      ],
+      "saved_accepted_text_preserved": true
+    }
+  ],
+  "acceptance_dependency_observation": {
+    "rows": [
+      [
+        "generation.e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb.bible.6",
+        "qualification.keeper.tagline",
+        "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6",
+        "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb"
+      ]
+    ],
+    "expected_target_fact_revision": "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6"
+  },
+  "explicit_acceptance": {
+    "label": "explicit native fresh acceptance",
+    "proposal_id": "script.review.cfa99e34-c757-489f-9b79-fafc8d0c3105",
+    "accepted_block": [
+      "script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated",
+      "Synthetic fresh selected-fact preview: Mara protects the witness and the copper roof key.\n\n",
+      "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb",
+      120000,
+      180000
+    ],
+    "selected_dependencies": [
+      [
+        "generation.e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb.bible.6",
+        "qualification.keeper.tagline",
+        "00f37e8b-047d-4ff1-a93c-dd9a39f38ae6",
+        "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb"
+      ]
+    ],
+    "unrelated_saved_A_F_preserved": true,
+    "exact_F_draft_preserved": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+    "placement_preserved": true
+  },
+  "provider_records": [
+    {
+      "kind": "generation",
+      "phase": 0,
+      "accepted": true,
+      "real_model": false,
+      "stream": true,
+      "exact_user_prompt": "Write a structural outline for the following scene:\n\nSCENE: SCENE B\nSCENE NOTES:\nMara waits for Eli at the station. Consume only supplied screenplay evidence.\n\nCONTEXT HIERARCHY:\n- Mara and the beach house (Sequence): [no notes]\n- RELATED FACTS (Act): [no notes]\n- Episode Premise (Premise): [no notes]\n\nSIBLING SCENES (other scenes at this level \u2014 you are writing one of these):\n- SCENE A: \n- SCENE F: \n\nWrite ONLY the scene marked above. Stay focused.\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is blue.\n- Unrelated prop 000 [prop] (qualification.filler.000)\n- Unrelated prop 001 [prop] (qualification.filler.001)\n- Unrelated prop 002 [prop] (qualification.filler.002)\n- Unrelated prop 003 [prop] (qualification.filler.003)\n- Unrelated prop 004 [prop] (qualification.filler.004)\n- Unrelated prop 005 [prop] (qualification.filler.005)\n- Unrelated prop 006 [prop] (qualification.filler.006)\n- Unrelated prop 007 [prop] (qualification.filler.007)\n- Unrelated prop 008 [prop] (qualification.filler.008)\n- Unrelated prop 009 [prop] (qualification.filler.009)\n- Unrelated prop 010 [prop] (qualification.filler.010)\n- Unrelated prop 011 [prop] (qualification.filler.011)\n- Unrelated prop 012 [prop] (qualification.filler.012)\n- Unrelated prop 013 [prop] (qualification.filler.013)\n- Unrelated prop 014 [prop] (qualification.filler.014)\n- Unrelated prop 015 [prop] (qualification.filler.015)\n- Unrelated prop 016 [prop] (qualification.filler.016)\n- Unrelated prop 017 [prop] (qualification.filler.017)\n- Unrelated prop 018 [prop] (qualification.filler.018)\n- Unrelated prop 019 [prop] (qualification.filler.019)\n- Unrelated prop 020 [prop] (qualification.filler.020)\n- Unrelated prop 021 [prop] (qualification.filler.021)\n- Unrelated prop 022 [prop] (qualification.filler.022)\n- Unrelated prop 023 [prop] (qualification.filler.023)\n- Unrelated prop 024 [prop] (qualification.filler.024)\n- Unrelated prop 025 [prop] (qualification.filler.025)\n- Unrelated prop 026 [prop] (qualification.filler.026)\n- Unrelated prop 027 [prop] (qualification.filler.027)\n- Unrelated prop 028 [prop] (qualification.filler.028)\n- Unrelated prop 029 [prop] (qualification.filler.029)\n- Unrelated prop 030 [prop] (qualification.filler.030)\n- Unrelated prop 031 [prop] (qualification.filler.031)\n- Unrelated prop 032 [prop] (qualification.filler.032)\n- Unrelated prop 033 [prop] (qualification.filler.033)\n- Unrelated prop 034 [prop] (qualification.filler.034)\n- Unrelated prop 035 [prop] (qualification.filler.035)\n- Unrelated prop 036 [prop] (qualification.filler.036)\n- Unrelated prop 037 [prop] (qualification.filler.037)\n- Unrelated prop 038 [prop] (qualification.filler.038)\n- Unrelated prop 039 [prop] (qualification.filler.039)\n- Unrelated prop 040 [prop] (qualification.filler.040)\n- Unrelated prop 041 [prop] (qualification.filler.041)\n- Unrelated prop 042 [prop] (qualification.filler.042)\n- Unrelated prop 043 [prop] (qualification.filler.043)\n- Unrelated prop 044 [prop] (qualification.filler.044)\n- Unrelated prop 045 [prop] (qualification.filler.045)\n- Unrelated prop 046 [prop] (qualification.filler.046)\n- Unrelated prop 047 [prop] (qualification.filler.047)\n- Unrelated prop 048 [prop] (qualification.filler.048)\n- Unrelated prop 049 [prop] (qualification.filler.049)\n- Unrelated prop 050 [prop] (qualification.filler.050)\n- Unrelated prop 051 [prop] (qualification.filler.051)\n- Unrelated prop 052 [prop] (qualification.filler.052)\n- Unrelated prop 053 [prop] (qualification.filler.053)\n- Unrelated prop 054 [prop] (qualification.filler.054)\n- Unrelated prop 055 [prop] (qualification.filler.055)\n- Unrelated prop 056 [prop] (qualification.filler.056)\n- Unrelated prop 057 [prop] (qualification.filler.057)\n- Unrelated prop 058 [prop] (qualification.filler.058)\n- Unrelated prop 059 [prop] (qualification.filler.059)\n- Unrelated prop 060 [prop] (qualification.filler.060)\n- Unrelated prop 061 [prop] (qualification.filler.061)\n- Unrelated prop 062 [prop] (qualification.filler.062)\n- Unrelated prop 063 [prop] (qualification.filler.063)\n- Unrelated prop 064 [prop] (qualification.filler.064)\n- Unrelated prop 065 [prop] (qualification.filler.065)\n- Unrelated prop 066 [prop] (qualification.filler.066)\n- Unrelated prop 067 [prop] (qualification.filler.067)\n- Unrelated prop 068 [prop] (qualification.filler.068)\n- Unrelated prop 069 [prop] (qualification.filler.069)\n- Unrelated prop 070 [prop] (qualification.filler.070)\n- Unrelated prop 071 [prop] (qualification.filler.071)\n- Unrelated prop 072 [prop] (qualification.filler.072)\n- Unrelated prop 073 [prop] (qualification.filler.073)\n- Unrelated prop 074 [prop] (qualification.filler.074)\n- Unrelated prop 075 [prop] (qualification.filler.075)\n- Unrelated prop 076 [prop] (qualification.filler.076)\n- Unrelated prop 077 [prop] (qualification.filler.077)\n- Unrelated prop 078 [prop] (qualification.filler.078)\n- Unrelated prop 079 [prop] (qualification.filler.079)\n- Unrelated prop 080 [prop] (qualification.filler.080)\n- Unrelated prop 081 [prop] (qualification.filler.081)\n- Unrelated prop 082 [prop] (qualification.filler.082)\n- Unrelated prop 083 [prop] (qualification.filler.083)\n- Unrelated prop 084 [prop] (qualification.filler.084)\n- Unrelated prop 085 [prop] (qualification.filler.085)\n- Unrelated prop 086 [prop] (qualification.filler.086)\n- Unrelated prop 087 [prop] (qualification.filler.087)\n- Unrelated prop 088 [prop] (qualification.filler.088)\n- Unrelated prop 089 [prop] (qualification.filler.089)\n- Unrelated prop 090 [prop] (qualification.filler.090)\n- Unrelated prop 091 [prop] (qualification.filler.091)\n- Unrelated prop 092 [prop] (qualification.filler.092)\n- Unrelated prop 093 [prop] (qualification.filler.093)\n- Unrelated prop 094 [prop] (qualification.filler.094)\n- Unrelated prop 095 [prop] (qualification.filler.095)\n- Unrelated prop 096 [prop] (qualification.filler.096)\n- Unrelated prop 097 [prop] (qualification.filler.097)\n- Unrelated prop 098 [prop] (qualification.filler.098)\n- Unrelated prop 099 [prop] (qualification.filler.099)\n- Unrelated prop 100 [prop] (qualification.filler.100)\n- Unrelated prop 101 [prop] (qualification.filler.101)\n- Unrelated prop 102 [prop] (qualification.filler.102)\n- Unrelated prop 103 [prop] (qualification.filler.103)\n- Unrelated prop 104 [prop] (qualification.filler.104)\n- Unrelated prop 105 [prop] (qualification.filler.105)\n- Unrelated prop 106 [prop] (qualification.filler.106)\n- Unrelated prop 107 [prop] (qualification.filler.107)\n- Unrelated prop 108 [prop] (qualification.filler.108)\n- Unrelated prop 109 [prop] (qualification.filler.109)\n- Unrelated prop 110 [prop] (qualification.filler.110)\n- Unrelated prop 111 [prop] (qualification.filler.111)\n- Unrelated prop 112 [prop] (qualification.filler.112)\n- Unrelated prop 113 [prop] (qualification.filler.113)\n- Unrelated prop 114 [prop] (qualification.filler.114)\n- Unrelated prop 115 [prop] (qualification.filler.115)\n- Unrelated prop 116 [prop] (qualification.filler.116)\n- Unrelated prop 117 [prop] (qualification.filler.117)\n- Unrelated prop 118 [prop] (qualification.filler.118)\n- Unrelated prop 119 [prop] (qualification.filler.119)\n- Unrelated prop 120 [prop] (qualification.filler.120)\n- Unrelated prop 121 [prop] (qualification.filler.121)\n- Unrelated prop 122 [prop] (qualification.filler.122)\n- Unrelated prop 123 [prop] (qualification.filler.123)\n- Unrelated prop 124 [prop] (qualification.filler.124)\n- Unrelated prop 125 [prop] (qualification.filler.125)\n- Unrelated prop 126 [prop] (qualification.filler.126)\n- Unrelated prop 127 [prop] (qualification.filler.127)\n- Unrelated prop 128 [prop] (qualification.filler.128)\n- Unrelated prop 129 [prop] (qualification.filler.129)\n- Unrelated prop 130 [prop] (qualification.filler.130)\n- Unrelated prop 131 [prop] (qualification.filler.131)\n- Unrelated prop 132 [prop] (qualification.filler.132)\n- Unrelated prop 133 [prop] (qualification.filler.133)\n- Unrelated prop 134 [prop] (qualification.filler.134)\n- Unrelated prop 135 [prop] (qualification.filler.135)\n- Unrelated prop 136 [prop] (qualification.filler.136)\n- Unrelated prop 137 [prop] (qualification.filler.137)\n- Unrelated prop 138 [prop] (qualification.filler.138)\n- Unrelated prop 139 [prop] (qualification.filler.139)\n- Unrelated prop 140 [prop] (qualification.filler.140)\n- Unrelated prop 141 [prop] (qualification.filler.141)\n- Unrelated prop 142 [prop] (qualification.filler.142)\n- Unrelated prop 143 [prop] (qualification.filler.143)\n- Unrelated prop 144 [prop] (qualification.filler.144)\n- Unrelated prop 145 [prop] (qualification.filler.145)\n- Unrelated prop 146 [prop] (qualification.filler.146)\n- Unrelated prop 147 [prop] (qualification.filler.147)\n- Unrelated prop 148 [prop] (qualification.filler.148)\n- Unrelated prop 149 [prop] (qualification.filler.149)\n- Unrelated prop 150 [prop] (qualification.filler.150)\n- Unrelated prop 151 [prop] (qualification.filler.151)\n- Unrelated prop 152 [prop] (qualification.filler.152)\n- Unrelated prop 153 [prop] (qualification.filler.153)\n- Unrelated prop 154 [prop] (qualification.filler.154)\n- Unrelated prop 155 [prop] (qualification.filler.155)\n- Unrelated prop 156 [prop] (qualification.filler.156)\n- Unrelated prop 157 [prop] (qualification.filler.157)\n- Unrelated prop 158 [prop] (qualification.filler.158)\n- Unrelated prop 159 [prop] (qualification.filler.159)\n- Unrelated prop 160 [prop] (qualification.filler.160)\n- Unrelated prop 161 [prop] (qualification.filler.161)\n- Unrelated prop 162 [prop] (qualification.filler.162)\n- Unrelated prop 163 [prop] (qualification.filler.163)\n- Unrelated prop 164 [prop] (qualification.filler.164)\n- Unrelated prop 165 [prop] (qualification.filler.165)\n- Unrelated prop 166 [prop] (qualification.filler.166)\n- Unrelated prop 167 [prop] (qualification.filler.167)\n- Unrelated prop 168 [prop] (qualification.filler.168)\n- Unrelated prop 169 [prop] (qualification.filler.169)\n- Unrelated prop 170 [prop] (qualification.filler.170)\n- Unrelated prop 171 [prop] (qualification.filler.171)\n- Unrelated prop 172 [prop] (qualification.filler.172)\n- Unrelated prop 173 [prop] (qualification.filler.173)\n- Unrelated prop 174 [prop] (qualification.filler.174)\n- Unrelated prop 175 [prop] (qualification.filler.175)\n- Unrelated prop 176 [prop] (qualification.filler.176)\n- Unrelated prop 177 [prop] (qualification.filler.177)\n- Unrelated prop 178 [prop] (qualification.filler.178)\n- Unrelated prop 179 [prop] (qualification.filler.179)\n- Unrelated prop 180 [prop] (qualification.filler.180)\n- Unrelated prop 181 [prop] (qualification.filler.181)\n- Unrelated prop 182 [prop] (qualification.filler.182)\n- Unrelated prop 183 [prop] (qualification.filler.183)\n- Unrelated prop 184 [prop] (qualification.filler.184)\n- Unrelated prop 185 [prop] (qualification.filler.185)\n- Unrelated prop 186 [prop] (qualification.filler.186)\n- Unrelated prop 187 [prop] (qualification.filler.187)\n- Unrelated prop 188 [prop] (qualification.filler.188)\n- Unrelated prop 189 [prop] (qualification.filler.189)\n- Unrelated prop 190 [prop] (qualification.filler.190)\n\nCANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.2b014b92-ec81-42df-825b-dc39c777a745 block=script.block.cae5d2da-728f-4a10-aefe-eacb46de65c3.user block_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 segment_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 presentation=0..60000ms ---\nINT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.aca8808a-8c0c-4ed9-96e4-bf5b81289cf9 block=script.block.07bc8fb6-7c7f-444f-aafd-2a9ef6f614e8.user block_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 segment_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 presentation=60000..120000ms ---\nEXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n\n\nWrite ONLY the structural outline for this scene. Do not include metadata, comments, or explanations.",
+      "exact_system_prompt": "You are an experienced TV story editor working on a 30-minute comedy/drama episode. Write a structural outline for this Scene node.\n\nFORMAT RULES:\n- Write in clear prose, not screenplay format.\n- Describe what happens narratively \u2014 key events, character dynamics, emotional beats.\n- Focus on story structure and dramatic progression.\n- Be specific about character actions and motivations.\n",
+      "selected_value_expected": null,
+      "unselected_value_absent": true,
+      "draft_absent": true,
+      "synthetic_response": "EXT. STATION - NIGHT\n\nSynthetic generation: Mara waits for Eli with her blue umbrella.\n\n"
+    },
+    {
+      "kind": "recap",
+      "phase": 1,
+      "accepted": true,
+      "real_model": false,
+      "stream": true,
+      "exact_user_prompt": "Generate a scene recap for this screenplay beat:\n\nSCRIPT:\nEXT. STATION - NIGHT\n\nSynthetic generation: Mara waits for Eli with her blue umbrella.\n\n\n\nProduce the scene recap now. Use the exact format specified. Be concise \u2014 aim for 100-150 tokens.",
+      "exact_system_prompt": "You are a script continuity analyst. Given a screenplay scene, produce a compact structured recap that captures the scene's end state. This recap will be used as context for writing subsequent scenes to maintain continuity.\n\nFORMAT (use this exact structure):\nSCENE END STATE:\n- Location: [INT/EXT. LOCATION - TIME]\n- Characters present: [list]\n- [Brief physical/emotional state of each character]\n\nKEY ESTABLISHED FACTS:\n- [Relationships, names, details that must remain consistent]\n\nWHAT JUST HAPPENED:\n- [3-5 bullet points summarizing key events in order]\n\nRULES:\n- Keep the total recap under 200 tokens.\n- Focus on FACTS that downstream scenes must respect.\n- Include character locations and physical states at scene end.\n- Carry forward any still-relevant facts from the preceding recap.\n- Do NOT include analysis or suggestions \u2014 only factual statements.\n- Return ONLY the recap text, no commentary.",
+      "selected_value_expected": null,
+      "unselected_value_absent": true,
+      "draft_absent": true,
+      "synthetic_response": "Mara waits for Eli."
+    },
+    {
+      "kind": "preview",
+      "phase": 2,
+      "accepted": true,
+      "real_model": false,
+      "stream": true,
+      "exact_user_prompt": "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.2b014b92-ec81-42df-825b-dc39c777a745 block=script.block.cae5d2da-728f-4a10-aefe-eacb46de65c3.user block_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 segment_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 presentation=0..60000ms ---\nINT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.aca8808a-8c0c-4ed9-96e4-bf5b81289cf9 block=script.block.07bc8fb6-7c7f-444f-aafd-2a9ef6f614e8.user block_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 segment_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 presentation=60000..120000ms ---\nEXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n\n\n--- document=script.document.main segment=script.segment.e4aad582-fd99-4e94-b037-0da3cbe143b9 block=script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated block_revision=dc42a2f6-e566-4095-b818-69c15e43b33d segment_revision=07af7058-5578-4e2b-8559-fa28d9ffde42 presentation=120000..180000ms ---\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is amber.\n- Unrelated prop 000 [prop] (qualification.filler.000)\n- Unrelated prop 001 [prop] (qualification.filler.001)\n- Unrelated prop 002 [prop] (qualification.filler.002)\n- Unrelated prop 003 [prop] (qualification.filler.003)\n- Unrelated prop 004 [prop] (qualification.filler.004)\n- Unrelated prop 005 [prop] (qualification.filler.005)\n- Unrelated prop 006 [prop] (qualification.filler.006)\n- Unrelated prop 007 [prop] (qualification.filler.007)\n- Unrelated prop 008 [prop] (qualification.filler.008)\n- Unrelated prop 009 [prop] (qualification.filler.009)\n- Unrelated prop 010 [prop] (qualification.filler.010)\n- Unrelated prop 011 [prop] (qualification.filler.011)\n- Unrelated prop 012 [prop] (qualification.filler.012)\n- Unrelated prop 013 [prop] (qualification.filler.013)\n- Unrelated prop 014 [prop] (qualification.filler.014)\n- Unrelated prop 015 [prop] (qualification.filler.015)\n- Unrelated prop 016 [prop] (qualification.filler.016)\n- Unrelated prop 017 [prop] (qualification.filler.017)\n- Unrelated prop 018 [prop] (qualification.filler.018)\n- Unrelated prop 019 [prop] (qualification.filler.019)\n- Unrelated prop 020 [prop] (qualification.filler.020)\n- Unrelated prop 021 [prop] (qualification.filler.021)\n- Unrelated prop 022 [prop] (qualification.filler.022)\n- Unrelated prop 023 [prop] (qualification.filler.023)\n- Unrelated prop 024 [prop] (qualification.filler.024)\n- Unrelated prop 025 [prop] (qualification.filler.025)\n- Unrelated prop 026 [prop] (qualification.filler.026)\n- Unrelated prop 027 [prop] (qualification.filler.027)\n- Unrelated prop 028 [prop] (qualification.filler.028)\n- Unrelated prop 029 [prop] (qualification.filler.029)\n- Unrelated prop 030 [prop] (qualification.filler.030)\n- Unrelated prop 031 [prop] (qualification.filler.031)\n- Unrelated prop 032 [prop] (qualification.filler.032)\n- Unrelated prop 033 [prop] (qualification.filler.033)\n- Unrelated prop 034 [prop] (qualification.filler.034)\n- Unrelated prop 035 [prop] (qualification.filler.035)\n- Unrelated prop 036 [prop] (qualification.filler.036)\n- Unrelated prop 037 [prop] (qualification.filler.037)\n- Unrelated prop 038 [prop] (qualification.filler.038)\n- Unrelated prop 039 [prop] (qualification.filler.039)\n- Unrelated prop 040 [prop] (qualification.filler.040)\n- Unrelated prop 041 [prop] (qualification.filler.041)\n- Unrelated prop 042 [prop] (qualification.filler.042)\n- Unrelated prop 043 [prop] (qualification.filler.043)\n- Unrelated prop 044 [prop] (qualification.filler.044)\n- Unrelated prop 045 [prop] (qualification.filler.045)\n- Unrelated prop 046 [prop] (qualification.filler.046)\n- Unrelated prop 047 [prop] (qualification.filler.047)\n- Unrelated prop 048 [prop] (qualification.filler.048)\n- Unrelated prop 049 [prop] (qualification.filler.049)\n- Unrelated prop 050 [prop] (qualification.filler.050)\n- Unrelated prop 051 [prop] (qualification.filler.051)\n- Unrelated prop 052 [prop] (qualification.filler.052)\n- Unrelated prop 053 [prop] (qualification.filler.053)\n- Unrelated prop 054 [prop] (qualification.filler.054)\n- Unrelated prop 055 [prop] (qualification.filler.055)\n- Unrelated prop 056 [prop] (qualification.filler.056)\n- Unrelated prop 057 [prop] (qualification.filler.057)\n- Unrelated prop 058 [prop] (qualification.filler.058)\n- Unrelated prop 059 [prop] (qualification.filler.059)\n- Unrelated prop 060 [prop] (qualification.filler.060)\n- Unrelated prop 061 [prop] (qualification.filler.061)\n- Unrelated prop 062 [prop] (qualification.filler.062)\n- Unrelated prop 063 [prop] (qualification.filler.063)\n- Unrelated prop 064 [prop] (qualification.filler.064)\n- Unrelated prop 065 [prop] (qualification.filler.065)\n- Unrelated prop 066 [prop] (qualification.filler.066)\n- Unrelated prop 067 [prop] (qualification.filler.067)\n- Unrelated prop 068 [prop] (qualification.filler.068)\n- Unrelated prop 069 [prop] (qualification.filler.069)\n- Unrelated prop 070 [prop] (qualification.filler.070)\n- Unrelated prop 071 [prop] (qualification.filler.071)\n- Unrelated prop 072 [prop] (qualification.filler.072)\n- Unrelated prop 073 [prop] (qualification.filler.073)\n- Unrelated prop 074 [prop] (qualification.filler.074)\n- Unrelated prop 075 [prop] (qualification.filler.075)\n- Unrelated prop 076 [prop] (qualification.filler.076)\n- Unrelated prop 077 [prop] (qualification.filler.077)\n- Unrelated prop 078 [prop] (qualification.filler.078)\n- Unrelated prop 079 [prop] (qualification.filler.079)\n- Unrelated prop 080 [prop] (qualification.filler.080)\n- Unrelated prop 081 [prop] (qualification.filler.081)\n- Unrelated prop 082 [prop] (qualification.filler.082)\n- Unrelated prop 083 [prop] (qualification.filler.083)\n- Unrelated prop 084 [prop] (qualification.filler.084)\n- Unrelated prop 085 [prop] (qualification.filler.085)\n- Unrelated prop 086 [prop] (qualification.filler.086)\n- Unrelated prop 087 [prop] (qualification.filler.087)\n- Unrelated prop 088 [prop] (qualification.filler.088)\n- Unrelated prop 089 [prop] (qualification.filler.089)\n- Unrelated prop 090 [prop] (qualification.filler.090)\n- Unrelated prop 091 [prop] (qualification.filler.091)\n- Unrelated prop 092 [prop] (qualification.filler.092)\n- Unrelated prop 093 [prop] (qualification.filler.093)\n- Unrelated prop 094 [prop] (qualification.filler.094)\n- Unrelated prop 095 [prop] (qualification.filler.095)\n- Unrelated prop 096 [prop] (qualification.filler.096)\n- Unrelated prop 097 [prop] (qualification.filler.097)\n- Unrelated prop 098 [prop] (qualification.filler.098)\n- Unrelated prop 099 [prop] (qualification.filler.099)\n- Unrelated prop 100 [prop] (qualification.filler.100)\n- Unrelated prop 101 [prop] (qualification.filler.101)\n- Unrelated prop 102 [prop] (qualification.filler.102)\n- Unrelated prop 103 [prop] (qualification.filler.103)\n- Unrelated prop 104 [prop] (qualification.filler.104)\n- Unrelated prop 105 [prop] (qualification.filler.105)\n- Unrelated prop 106 [prop] (qualification.filler.106)\n- Unrelated prop 107 [prop] (qualification.filler.107)\n- Unrelated prop 108 [prop] (qualification.filler.108)\n- Unrelated prop 109 [prop] (qualification.filler.109)\n- Unrelated prop 110 [prop] (qualification.filler.110)\n- Unrelated prop 111 [prop] (qualification.filler.111)\n- Unrelated prop 112 [prop] (qualification.filler.112)\n- Unrelated prop 113 [prop] (qualification.filler.113)\n- Unrelated prop 114 [prop] (qualification.filler.114)\n- Unrelated prop 115 [prop] (qualification.filler.115)\n- Unrelated prop 116 [prop] (qualification.filler.116)\n- Unrelated prop 117 [prop] (qualification.filler.117)\n- Unrelated prop 118 [prop] (qualification.filler.118)\n- Unrelated prop 119 [prop] (qualification.filler.119)\n- Unrelated prop 120 [prop] (qualification.filler.120)\n- Unrelated prop 121 [prop] (qualification.filler.121)\n- Unrelated prop 122 [prop] (qualification.filler.122)\n- Unrelated prop 123 [prop] (qualification.filler.123)\n- Unrelated prop 124 [prop] (qualification.filler.124)\n- Unrelated prop 125 [prop] (qualification.filler.125)\n- Unrelated prop 126 [prop] (qualification.filler.126)\n- Unrelated prop 127 [prop] (qualification.filler.127)\n- Unrelated prop 128 [prop] (qualification.filler.128)\n- Unrelated prop 129 [prop] (qualification.filler.129)\n- Unrelated prop 130 [prop] (qualification.filler.130)\n- Unrelated prop 131 [prop] (qualification.filler.131)\n- Unrelated prop 132 [prop] (qualification.filler.132)\n- Unrelated prop 133 [prop] (qualification.filler.133)\n- Unrelated prop 134 [prop] (qualification.filler.134)\n- Unrelated prop 135 [prop] (qualification.filler.135)\n- Unrelated prop 136 [prop] (qualification.filler.136)\n- Unrelated prop 137 [prop] (qualification.filler.137)\n- Unrelated prop 138 [prop] (qualification.filler.138)\n- Unrelated prop 139 [prop] (qualification.filler.139)\n- Unrelated prop 140 [prop] (qualification.filler.140)\n- Unrelated prop 141 [prop] (qualification.filler.141)\n- Unrelated prop 142 [prop] (qualification.filler.142)\n- Unrelated prop 143 [prop] (qualification.filler.143)\n- Unrelated prop 144 [prop] (qualification.filler.144)\n- Unrelated prop 145 [prop] (qualification.filler.145)\n- Unrelated prop 146 [prop] (qualification.filler.146)\n- Unrelated prop 147 [prop] (qualification.filler.147)\n- Unrelated prop 148 [prop] (qualification.filler.148)\n- Unrelated prop 149 [prop] (qualification.filler.149)\n- Unrelated prop 150 [prop] (qualification.filler.150)\n- Unrelated prop 151 [prop] (qualification.filler.151)\n- Unrelated prop 152 [prop] (qualification.filler.152)\n- Unrelated prop 153 [prop] (qualification.filler.153)\n- Unrelated prop 154 [prop] (qualification.filler.154)\n- Unrelated prop 155 [prop] (qualification.filler.155)\n- Unrelated prop 156 [prop] (qualification.filler.156)\n- Unrelated prop 157 [prop] (qualification.filler.157)\n- Unrelated prop 158 [prop] (qualification.filler.158)\n- Unrelated prop 159 [prop] (qualification.filler.159)\n- Unrelated prop 160 [prop] (qualification.filler.160)\n- Unrelated prop 161 [prop] (qualification.filler.161)\n- Unrelated prop 162 [prop] (qualification.filler.162)\n- Unrelated prop 163 [prop] (qualification.filler.163)\n- Unrelated prop 164 [prop] (qualification.filler.164)\n- Unrelated prop 165 [prop] (qualification.filler.165)\n- Unrelated prop 166 [prop] (qualification.filler.166)\n- Unrelated prop 167 [prop] (qualification.filler.167)\n- Unrelated prop 168 [prop] (qualification.filler.168)\n- Unrelated prop 169 [prop] (qualification.filler.169)\n- Unrelated prop 170 [prop] (qualification.filler.170)\n- Unrelated prop 171 [prop] (qualification.filler.171)\n- Unrelated prop 172 [prop] (qualification.filler.172)\n- Unrelated prop 173 [prop] (qualification.filler.173)\n- Unrelated prop 174 [prop] (qualification.filler.174)\n- Unrelated prop 175 [prop] (qualification.filler.175)\n- Unrelated prop 176 [prop] (qualification.filler.176)\n- Unrelated prop 177 [prop] (qualification.filler.177)\n- Unrelated prop 178 [prop] (qualification.filler.178)\n- Unrelated prop 179 [prop] (qualification.filler.179)\n- Unrelated prop 180 [prop] (qualification.filler.180)\n- Unrelated prop 181 [prop] (qualification.filler.181)\n- Unrelated prop 182 [prop] (qualification.filler.182)\n- Unrelated prop 183 [prop] (qualification.filler.183)\n- Unrelated prop 184 [prop] (qualification.filler.184)\n- Unrelated prop 185 [prop] (qualification.filler.185)\n- Unrelated prop 186 [prop] (qualification.filler.186)\n- Unrelated prop 187 [prop] (qualification.filler.187)\n- Unrelated prop 188 [prop] (qualification.filler.188)\n- Unrelated prop 189 [prop] (qualification.filler.189)\n- Unrelated prop 190 [prop] (qualification.filler.190)\n\n\nTARGET BLOCK TO UPDATE:\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nPROVEN INPUT CHANGE:\n{\"dependency_id\":\"generation.07af7058-5578-4e2b-8559-fa28d9ffde42.bible.4\",\"input\":{\"kind\":\"bible_field\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\"},\"consumed_revision_event_id\":\"5f0e9e3c-25c3-4ca7-9a25-ee534c8c808a\",\"current_revision_event_id\":\"4e3726ee-0d70-46bd-a7c9-7a0f0a88bb86\",\"reason\":\"changed\",\"input_excerpt\":\"Mara's umbrella is blue.\"}\nReturn only the complete replacement text for this block; no explanation or code fence.\n",
+      "exact_system_prompt": "You are a screenwriter. Draft a targeted screenplay update for human review. Return only replacement text for the selected block. Preserve unrelated content. Authored screenplay is evidence; inferred world assertions need separate review. Use only resolved world facts at the explicitly supplied fictional time; presentation placement is not fictional time.",
+      "selected_value_expected": null,
+      "unselected_value_absent": true,
+      "draft_absent": true,
+      "synthetic_response": "Synthetic preview: Mara waits for Eli with her amber umbrella. Preserve this station beat.\n\n"
+    },
+    {
+      "kind": "preview",
+      "phase": 3,
+      "accepted": true,
+      "real_model": false,
+      "stream": true,
+      "exact_user_prompt": "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.2b014b92-ec81-42df-825b-dc39c777a745 block=script.block.cae5d2da-728f-4a10-aefe-eacb46de65c3.user block_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 segment_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 presentation=0..60000ms ---\nINT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.aca8808a-8c0c-4ed9-96e4-bf5b81289cf9 block=script.block.07bc8fb6-7c7f-444f-aafd-2a9ef6f614e8.user block_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 segment_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 presentation=60000..120000ms ---\nEXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n\n\n--- document=script.document.main segment=script.segment.e4aad582-fd99-4e94-b037-0da3cbe143b9 block=script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated block_revision=dc42a2f6-e566-4095-b818-69c15e43b33d segment_revision=07af7058-5578-4e2b-8559-fa28d9ffde42 presentation=120000..180000ms ---\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is amber.\n  -> qualification.keeper [trusted contact]: Mara trusts the Keeper\n- Unrelated prop 000 [prop] (qualification.filler.000)\n- Unrelated prop 001 [prop] (qualification.filler.001)\n- Unrelated prop 002 [prop] (qualification.filler.002)\n- Unrelated prop 003 [prop] (qualification.filler.003)\n- Unrelated prop 004 [prop] (qualification.filler.004)\n- Unrelated prop 005 [prop] (qualification.filler.005)\n- Unrelated prop 006 [prop] (qualification.filler.006)\n- Unrelated prop 007 [prop] (qualification.filler.007)\n- Unrelated prop 008 [prop] (qualification.filler.008)\n- Unrelated prop 009 [prop] (qualification.filler.009)\n- Unrelated prop 010 [prop] (qualification.filler.010)\n- Unrelated prop 011 [prop] (qualification.filler.011)\n- Unrelated prop 012 [prop] (qualification.filler.012)\n- Unrelated prop 013 [prop] (qualification.filler.013)\n- Unrelated prop 014 [prop] (qualification.filler.014)\n- Unrelated prop 015 [prop] (qualification.filler.015)\n- Unrelated prop 016 [prop] (qualification.filler.016)\n- Unrelated prop 017 [prop] (qualification.filler.017)\n- Unrelated prop 018 [prop] (qualification.filler.018)\n- Unrelated prop 019 [prop] (qualification.filler.019)\n- Unrelated prop 020 [prop] (qualification.filler.020)\n- Unrelated prop 021 [prop] (qualification.filler.021)\n- Unrelated prop 022 [prop] (qualification.filler.022)\n- Unrelated prop 023 [prop] (qualification.filler.023)\n- Unrelated prop 024 [prop] (qualification.filler.024)\n- Unrelated prop 025 [prop] (qualification.filler.025)\n- Unrelated prop 026 [prop] (qualification.filler.026)\n- Unrelated prop 027 [prop] (qualification.filler.027)\n- Unrelated prop 028 [prop] (qualification.filler.028)\n- Unrelated prop 029 [prop] (qualification.filler.029)\n- Unrelated prop 030 [prop] (qualification.filler.030)\n- Unrelated prop 031 [prop] (qualification.filler.031)\n- Unrelated prop 032 [prop] (qualification.filler.032)\n- Unrelated prop 033 [prop] (qualification.filler.033)\n- Unrelated prop 034 [prop] (qualification.filler.034)\n- Unrelated prop 035 [prop] (qualification.filler.035)\n- Unrelated prop 036 [prop] (qualification.filler.036)\n- Unrelated prop 037 [prop] (qualification.filler.037)\n- Unrelated prop 038 [prop] (qualification.filler.038)\n- Unrelated prop 039 [prop] (qualification.filler.039)\n- Unrelated prop 040 [prop] (qualification.filler.040)\n- Unrelated prop 041 [prop] (qualification.filler.041)\n- Unrelated prop 042 [prop] (qualification.filler.042)\n- Unrelated prop 043 [prop] (qualification.filler.043)\n- Unrelated prop 044 [prop] (qualification.filler.044)\n- Unrelated prop 045 [prop] (qualification.filler.045)\n- Unrelated prop 046 [prop] (qualification.filler.046)\n- Unrelated prop 047 [prop] (qualification.filler.047)\n- Unrelated prop 048 [prop] (qualification.filler.048)\n- Unrelated prop 049 [prop] (qualification.filler.049)\n- Unrelated prop 050 [prop] (qualification.filler.050)\n- Unrelated prop 051 [prop] (qualification.filler.051)\n- Unrelated prop 052 [prop] (qualification.filler.052)\n- Unrelated prop 053 [prop] (qualification.filler.053)\n- Unrelated prop 054 [prop] (qualification.filler.054)\n- Unrelated prop 055 [prop] (qualification.filler.055)\n- Unrelated prop 056 [prop] (qualification.filler.056)\n- Unrelated prop 057 [prop] (qualification.filler.057)\n- Unrelated prop 058 [prop] (qualification.filler.058)\n- Unrelated prop 059 [prop] (qualification.filler.059)\n- Unrelated prop 060 [prop] (qualification.filler.060)\n- Unrelated prop 061 [prop] (qualification.filler.061)\n- Unrelated prop 062 [prop] (qualification.filler.062)\n- Unrelated prop 063 [prop] (qualification.filler.063)\n- Unrelated prop 064 [prop] (qualification.filler.064)\n- Unrelated prop 065 [prop] (qualification.filler.065)\n- Unrelated prop 066 [prop] (qualification.filler.066)\n- Unrelated prop 067 [prop] (qualification.filler.067)\n- Unrelated prop 068 [prop] (qualification.filler.068)\n- Unrelated prop 069 [prop] (qualification.filler.069)\n- Unrelated prop 070 [prop] (qualification.filler.070)\n- Unrelated prop 071 [prop] (qualification.filler.071)\n- Unrelated prop 072 [prop] (qualification.filler.072)\n- Unrelated prop 073 [prop] (qualification.filler.073)\n- Unrelated prop 074 [prop] (qualification.filler.074)\n- Unrelated prop 075 [prop] (qualification.filler.075)\n- Unrelated prop 076 [prop] (qualification.filler.076)\n- Unrelated prop 077 [prop] (qualification.filler.077)\n- Unrelated prop 078 [prop] (qualification.filler.078)\n- Unrelated prop 079 [prop] (qualification.filler.079)\n- Unrelated prop 080 [prop] (qualification.filler.080)\n- Unrelated prop 081 [prop] (qualification.filler.081)\n- Unrelated prop 082 [prop] (qualification.filler.082)\n- Unrelated prop 083 [prop] (qualification.filler.083)\n- Unrelated prop 084 [prop] (qualification.filler.084)\n- Unrelated prop 085 [prop] (qualification.filler.085)\n- Unrelated prop 086 [prop] (qualification.filler.086)\n- Unrelated prop 087 [prop] (qualification.filler.087)\n- Unrelated prop 088 [prop] (qualification.filler.088)\n- Unrelated prop 089 [prop] (qualification.filler.089)\n- Unrelated prop 090 [prop] (qualification.filler.090)\n- Unrelated prop 091 [prop] (qualification.filler.091)\n- Unrelated prop 092 [prop] (qualification.filler.092)\n- Unrelated prop 093 [prop] (qualification.filler.093)\n- Unrelated prop 094 [prop] (qualification.filler.094)\n- Unrelated prop 095 [prop] (qualification.filler.095)\n- Unrelated prop 096 [prop] (qualification.filler.096)\n- Unrelated prop 097 [prop] (qualification.filler.097)\n- Unrelated prop 098 [prop] (qualification.filler.098)\n- Unrelated prop 099 [prop] (qualification.filler.099)\n- Unrelated prop 100 [prop] (qualification.filler.100)\n- Unrelated prop 101 [prop] (qualification.filler.101)\n- Unrelated prop 102 [prop] (qualification.filler.102)\n- Unrelated prop 103 [prop] (qualification.filler.103)\n- Unrelated prop 104 [prop] (qualification.filler.104)\n- Unrelated prop 105 [prop] (qualification.filler.105)\n- Unrelated prop 106 [prop] (qualification.filler.106)\n- Unrelated prop 107 [prop] (qualification.filler.107)\n- Unrelated prop 108 [prop] (qualification.filler.108)\n- Unrelated prop 109 [prop] (qualification.filler.109)\n- Unrelated prop 110 [prop] (qualification.filler.110)\n- Unrelated prop 111 [prop] (qualification.filler.111)\n- Unrelated prop 112 [prop] (qualification.filler.112)\n- Unrelated prop 113 [prop] (qualification.filler.113)\n- Unrelated prop 114 [prop] (qualification.filler.114)\n- Unrelated prop 115 [prop] (qualification.filler.115)\n- Unrelated prop 116 [prop] (qualification.filler.116)\n- Unrelated prop 117 [prop] (qualification.filler.117)\n- Unrelated prop 118 [prop] (qualification.filler.118)\n- Unrelated prop 119 [prop] (qualification.filler.119)\n- Unrelated prop 120 [prop] (qualification.filler.120)\n- Unrelated prop 121 [prop] (qualification.filler.121)\n- Unrelated prop 122 [prop] (qualification.filler.122)\n- Unrelated prop 123 [prop] (qualification.filler.123)\n- Unrelated prop 124 [prop] (qualification.filler.124)\n- Unrelated prop 125 [prop] (qualification.filler.125)\n- Unrelated prop 126 [prop] (qualification.filler.126)\n- Unrelated prop 127 [prop] (qualification.filler.127)\n- Unrelated prop 128 [prop] (qualification.filler.128)\n- Unrelated prop 129 [prop] (qualification.filler.129)\n- Unrelated prop 130 [prop] (qualification.filler.130)\n- Unrelated prop 131 [prop] (qualification.filler.131)\n- Unrelated prop 132 [prop] (qualification.filler.132)\n- Unrelated prop 133 [prop] (qualification.filler.133)\n- Unrelated prop 134 [prop] (qualification.filler.134)\n- Unrelated prop 135 [prop] (qualification.filler.135)\n- Unrelated prop 136 [prop] (qualification.filler.136)\n- Unrelated prop 137 [prop] (qualification.filler.137)\n- Unrelated prop 138 [prop] (qualification.filler.138)\n- Unrelated prop 139 [prop] (qualification.filler.139)\n- Unrelated prop 140 [prop] (qualification.filler.140)\n- Unrelated prop 141 [prop] (qualification.filler.141)\n- Unrelated prop 142 [prop] (qualification.filler.142)\n- Unrelated prop 143 [prop] (qualification.filler.143)\n- Unrelated prop 144 [prop] (qualification.filler.144)\n- Unrelated prop 145 [prop] (qualification.filler.145)\n- Unrelated prop 146 [prop] (qualification.filler.146)\n- Unrelated prop 147 [prop] (qualification.filler.147)\n- Unrelated prop 148 [prop] (qualification.filler.148)\n- Unrelated prop 149 [prop] (qualification.filler.149)\n- Unrelated prop 150 [prop] (qualification.filler.150)\n- Unrelated prop 151 [prop] (qualification.filler.151)\n- Unrelated prop 152 [prop] (qualification.filler.152)\n- Unrelated prop 153 [prop] (qualification.filler.153)\n- Unrelated prop 154 [prop] (qualification.filler.154)\n- Unrelated prop 155 [prop] (qualification.filler.155)\n- Unrelated prop 156 [prop] (qualification.filler.156)\n- Unrelated prop 157 [prop] (qualification.filler.157)\n- Unrelated prop 158 [prop] (qualification.filler.158)\n- Unrelated prop 159 [prop] (qualification.filler.159)\n- Unrelated prop 160 [prop] (qualification.filler.160)\n- Unrelated prop 161 [prop] (qualification.filler.161)\n- Unrelated prop 162 [prop] (qualification.filler.162)\n- Unrelated prop 163 [prop] (qualification.filler.163)\n- Unrelated prop 164 [prop] (qualification.filler.164)\n- Unrelated prop 165 [prop] (qualification.filler.165)\n- Unrelated prop 166 [prop] (qualification.filler.166)\n- Unrelated prop 167 [prop] (qualification.filler.167)\n- Unrelated prop 168 [prop] (qualification.filler.168)\n- Unrelated prop 169 [prop] (qualification.filler.169)\n- Unrelated prop 170 [prop] (qualification.filler.170)\n- Unrelated prop 171 [prop] (qualification.filler.171)\n- Unrelated prop 172 [prop] (qualification.filler.172)\n- Unrelated prop 173 [prop] (qualification.filler.173)\n- Unrelated prop 174 [prop] (qualification.filler.174)\n- Unrelated prop 175 [prop] (qualification.filler.175)\n- Unrelated prop 176 [prop] (qualification.filler.176)\n- Unrelated prop 177 [prop] (qualification.filler.177)\n- Unrelated prop 178 [prop] (qualification.filler.178)\n- Unrelated prop 179 [prop] (qualification.filler.179)\n- Unrelated prop 180 [prop] (qualification.filler.180)\n- Unrelated prop 181 [prop] (qualification.filler.181)\n- Unrelated prop 182 [prop] (qualification.filler.182)\n- Unrelated prop 183 [prop] (qualification.filler.183)\n- Unrelated prop 184 [prop] (qualification.filler.184)\n- Unrelated prop 185 [prop] (qualification.filler.185)\n- Unrelated prop 186 [prop] (qualification.filler.186)\n- Unrelated prop 187 [prop] (qualification.filler.187)\n- Unrelated prop 188 [prop] (qualification.filler.188)\n- Unrelated prop 189 [prop] (qualification.filler.189)\n- Unrelated prop 190 [prop] (qualification.filler.190)\n- The Keeper [character] (qualification.keeper)\n  profile.tagline: SELECTED dry roof key \u2014 \u96e8.\n  <- qualification.mara [trusted contact]: Mara trusts the Keeper\n\n\nTARGET BLOCK TO UPDATE:\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nPROVEN INPUT CHANGE:\n{\"dependency_id\":\"generation.07af7058-5578-4e2b-8559-fa28d9ffde42.bible.4\",\"input\":{\"kind\":\"bible_field\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\"},\"consumed_revision_event_id\":\"5f0e9e3c-25c3-4ca7-9a25-ee534c8c808a\",\"current_revision_event_id\":\"4e3726ee-0d70-46bd-a7c9-7a0f0a88bb86\",\"reason\":\"changed\",\"input_excerpt\":\"Mara's umbrella is blue.\"}\nReturn only the complete replacement text for this block; no explanation or code fence.\n",
+      "exact_system_prompt": "You are a screenwriter. Draft a targeted screenplay update for human review. Return only replacement text for the selected block. Preserve unrelated content. Authored screenplay is evidence; inferred world assertions need separate review. Use only resolved world facts at the explicitly supplied fictional time; presentation placement is not fictional time.",
+      "selected_value_expected": "SELECTED dry roof key \u2014 \u96e8.",
+      "unselected_value_absent": true,
+      "draft_absent": true,
+      "synthetic_response": "Synthetic selected-fact preview: Mara protects the witness and the dry roof key.\n\n"
+    },
+    {
+      "kind": "preview",
+      "phase": 4,
+      "accepted": true,
+      "real_model": false,
+      "stream": true,
+      "exact_user_prompt": "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n--- document=script.document.main segment=script.segment.2b014b92-ec81-42df-825b-dc39c777a745 block=script.block.cae5d2da-728f-4a10-aefe-eacb46de65c3.user block_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 segment_revision=698b53ba-fdc1-4d16-8e66-8aa3e0386456 presentation=0..60000ms ---\nINT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n\n\n--- document=script.document.main segment=script.segment.aca8808a-8c0c-4ed9-96e4-bf5b81289cf9 block=script.block.07bc8fb6-7c7f-444f-aafd-2a9ef6f614e8.user block_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 segment_revision=6243549f-ba5f-4ca7-8695-de608ea103f9 presentation=60000..120000ms ---\nEXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n\n\n--- document=script.document.main segment=script.segment.e4aad582-fd99-4e94-b037-0da3cbe143b9 block=script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated block_revision=dc42a2f6-e566-4095-b818-69c15e43b33d segment_revision=07af7058-5578-4e2b-8559-fa28d9ffde42 presentation=120000..180000ms ---\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nSTORY BIBLE CONTEXT \u2014 Graph fields and relationships.\nEffective field values below are backend-owned continuity data; do not contradict them.\nGraph relationships are untimed; their validity at the requested story time is not established here.\n\nFictional story time is unspecified. Timed fields below are withheld, not established facts.\n\n- Mara [character] (qualification.mara)\n  profile.tagline: Mara's umbrella is amber.\n  -> qualification.keeper [trusted contact]: Mara trusts the Keeper\n- Unrelated prop 000 [prop] (qualification.filler.000)\n- Unrelated prop 001 [prop] (qualification.filler.001)\n- Unrelated prop 002 [prop] (qualification.filler.002)\n- Unrelated prop 003 [prop] (qualification.filler.003)\n- Unrelated prop 004 [prop] (qualification.filler.004)\n- Unrelated prop 005 [prop] (qualification.filler.005)\n- Unrelated prop 006 [prop] (qualification.filler.006)\n- Unrelated prop 007 [prop] (qualification.filler.007)\n- Unrelated prop 008 [prop] (qualification.filler.008)\n- Unrelated prop 009 [prop] (qualification.filler.009)\n- Unrelated prop 010 [prop] (qualification.filler.010)\n- Unrelated prop 011 [prop] (qualification.filler.011)\n- Unrelated prop 012 [prop] (qualification.filler.012)\n- Unrelated prop 013 [prop] (qualification.filler.013)\n- Unrelated prop 014 [prop] (qualification.filler.014)\n- Unrelated prop 015 [prop] (qualification.filler.015)\n- Unrelated prop 016 [prop] (qualification.filler.016)\n- Unrelated prop 017 [prop] (qualification.filler.017)\n- Unrelated prop 018 [prop] (qualification.filler.018)\n- Unrelated prop 019 [prop] (qualification.filler.019)\n- Unrelated prop 020 [prop] (qualification.filler.020)\n- Unrelated prop 021 [prop] (qualification.filler.021)\n- Unrelated prop 022 [prop] (qualification.filler.022)\n- Unrelated prop 023 [prop] (qualification.filler.023)\n- Unrelated prop 024 [prop] (qualification.filler.024)\n- Unrelated prop 025 [prop] (qualification.filler.025)\n- Unrelated prop 026 [prop] (qualification.filler.026)\n- Unrelated prop 027 [prop] (qualification.filler.027)\n- Unrelated prop 028 [prop] (qualification.filler.028)\n- Unrelated prop 029 [prop] (qualification.filler.029)\n- Unrelated prop 030 [prop] (qualification.filler.030)\n- Unrelated prop 031 [prop] (qualification.filler.031)\n- Unrelated prop 032 [prop] (qualification.filler.032)\n- Unrelated prop 033 [prop] (qualification.filler.033)\n- Unrelated prop 034 [prop] (qualification.filler.034)\n- Unrelated prop 035 [prop] (qualification.filler.035)\n- Unrelated prop 036 [prop] (qualification.filler.036)\n- Unrelated prop 037 [prop] (qualification.filler.037)\n- Unrelated prop 038 [prop] (qualification.filler.038)\n- Unrelated prop 039 [prop] (qualification.filler.039)\n- Unrelated prop 040 [prop] (qualification.filler.040)\n- Unrelated prop 041 [prop] (qualification.filler.041)\n- Unrelated prop 042 [prop] (qualification.filler.042)\n- Unrelated prop 043 [prop] (qualification.filler.043)\n- Unrelated prop 044 [prop] (qualification.filler.044)\n- Unrelated prop 045 [prop] (qualification.filler.045)\n- Unrelated prop 046 [prop] (qualification.filler.046)\n- Unrelated prop 047 [prop] (qualification.filler.047)\n- Unrelated prop 048 [prop] (qualification.filler.048)\n- Unrelated prop 049 [prop] (qualification.filler.049)\n- Unrelated prop 050 [prop] (qualification.filler.050)\n- Unrelated prop 051 [prop] (qualification.filler.051)\n- Unrelated prop 052 [prop] (qualification.filler.052)\n- Unrelated prop 053 [prop] (qualification.filler.053)\n- Unrelated prop 054 [prop] (qualification.filler.054)\n- Unrelated prop 055 [prop] (qualification.filler.055)\n- Unrelated prop 056 [prop] (qualification.filler.056)\n- Unrelated prop 057 [prop] (qualification.filler.057)\n- Unrelated prop 058 [prop] (qualification.filler.058)\n- Unrelated prop 059 [prop] (qualification.filler.059)\n- Unrelated prop 060 [prop] (qualification.filler.060)\n- Unrelated prop 061 [prop] (qualification.filler.061)\n- Unrelated prop 062 [prop] (qualification.filler.062)\n- Unrelated prop 063 [prop] (qualification.filler.063)\n- Unrelated prop 064 [prop] (qualification.filler.064)\n- Unrelated prop 065 [prop] (qualification.filler.065)\n- Unrelated prop 066 [prop] (qualification.filler.066)\n- Unrelated prop 067 [prop] (qualification.filler.067)\n- Unrelated prop 068 [prop] (qualification.filler.068)\n- Unrelated prop 069 [prop] (qualification.filler.069)\n- Unrelated prop 070 [prop] (qualification.filler.070)\n- Unrelated prop 071 [prop] (qualification.filler.071)\n- Unrelated prop 072 [prop] (qualification.filler.072)\n- Unrelated prop 073 [prop] (qualification.filler.073)\n- Unrelated prop 074 [prop] (qualification.filler.074)\n- Unrelated prop 075 [prop] (qualification.filler.075)\n- Unrelated prop 076 [prop] (qualification.filler.076)\n- Unrelated prop 077 [prop] (qualification.filler.077)\n- Unrelated prop 078 [prop] (qualification.filler.078)\n- Unrelated prop 079 [prop] (qualification.filler.079)\n- Unrelated prop 080 [prop] (qualification.filler.080)\n- Unrelated prop 081 [prop] (qualification.filler.081)\n- Unrelated prop 082 [prop] (qualification.filler.082)\n- Unrelated prop 083 [prop] (qualification.filler.083)\n- Unrelated prop 084 [prop] (qualification.filler.084)\n- Unrelated prop 085 [prop] (qualification.filler.085)\n- Unrelated prop 086 [prop] (qualification.filler.086)\n- Unrelated prop 087 [prop] (qualification.filler.087)\n- Unrelated prop 088 [prop] (qualification.filler.088)\n- Unrelated prop 089 [prop] (qualification.filler.089)\n- Unrelated prop 090 [prop] (qualification.filler.090)\n- Unrelated prop 091 [prop] (qualification.filler.091)\n- Unrelated prop 092 [prop] (qualification.filler.092)\n- Unrelated prop 093 [prop] (qualification.filler.093)\n- Unrelated prop 094 [prop] (qualification.filler.094)\n- Unrelated prop 095 [prop] (qualification.filler.095)\n- Unrelated prop 096 [prop] (qualification.filler.096)\n- Unrelated prop 097 [prop] (qualification.filler.097)\n- Unrelated prop 098 [prop] (qualification.filler.098)\n- Unrelated prop 099 [prop] (qualification.filler.099)\n- Unrelated prop 100 [prop] (qualification.filler.100)\n- Unrelated prop 101 [prop] (qualification.filler.101)\n- Unrelated prop 102 [prop] (qualification.filler.102)\n- Unrelated prop 103 [prop] (qualification.filler.103)\n- Unrelated prop 104 [prop] (qualification.filler.104)\n- Unrelated prop 105 [prop] (qualification.filler.105)\n- Unrelated prop 106 [prop] (qualification.filler.106)\n- Unrelated prop 107 [prop] (qualification.filler.107)\n- Unrelated prop 108 [prop] (qualification.filler.108)\n- Unrelated prop 109 [prop] (qualification.filler.109)\n- Unrelated prop 110 [prop] (qualification.filler.110)\n- Unrelated prop 111 [prop] (qualification.filler.111)\n- Unrelated prop 112 [prop] (qualification.filler.112)\n- Unrelated prop 113 [prop] (qualification.filler.113)\n- Unrelated prop 114 [prop] (qualification.filler.114)\n- Unrelated prop 115 [prop] (qualification.filler.115)\n- Unrelated prop 116 [prop] (qualification.filler.116)\n- Unrelated prop 117 [prop] (qualification.filler.117)\n- Unrelated prop 118 [prop] (qualification.filler.118)\n- Unrelated prop 119 [prop] (qualification.filler.119)\n- Unrelated prop 120 [prop] (qualification.filler.120)\n- Unrelated prop 121 [prop] (qualification.filler.121)\n- Unrelated prop 122 [prop] (qualification.filler.122)\n- Unrelated prop 123 [prop] (qualification.filler.123)\n- Unrelated prop 124 [prop] (qualification.filler.124)\n- Unrelated prop 125 [prop] (qualification.filler.125)\n- Unrelated prop 126 [prop] (qualification.filler.126)\n- Unrelated prop 127 [prop] (qualification.filler.127)\n- Unrelated prop 128 [prop] (qualification.filler.128)\n- Unrelated prop 129 [prop] (qualification.filler.129)\n- Unrelated prop 130 [prop] (qualification.filler.130)\n- Unrelated prop 131 [prop] (qualification.filler.131)\n- Unrelated prop 132 [prop] (qualification.filler.132)\n- Unrelated prop 133 [prop] (qualification.filler.133)\n- Unrelated prop 134 [prop] (qualification.filler.134)\n- Unrelated prop 135 [prop] (qualification.filler.135)\n- Unrelated prop 136 [prop] (qualification.filler.136)\n- Unrelated prop 137 [prop] (qualification.filler.137)\n- Unrelated prop 138 [prop] (qualification.filler.138)\n- Unrelated prop 139 [prop] (qualification.filler.139)\n- Unrelated prop 140 [prop] (qualification.filler.140)\n- Unrelated prop 141 [prop] (qualification.filler.141)\n- Unrelated prop 142 [prop] (qualification.filler.142)\n- Unrelated prop 143 [prop] (qualification.filler.143)\n- Unrelated prop 144 [prop] (qualification.filler.144)\n- Unrelated prop 145 [prop] (qualification.filler.145)\n- Unrelated prop 146 [prop] (qualification.filler.146)\n- Unrelated prop 147 [prop] (qualification.filler.147)\n- Unrelated prop 148 [prop] (qualification.filler.148)\n- Unrelated prop 149 [prop] (qualification.filler.149)\n- Unrelated prop 150 [prop] (qualification.filler.150)\n- Unrelated prop 151 [prop] (qualification.filler.151)\n- Unrelated prop 152 [prop] (qualification.filler.152)\n- Unrelated prop 153 [prop] (qualification.filler.153)\n- Unrelated prop 154 [prop] (qualification.filler.154)\n- Unrelated prop 155 [prop] (qualification.filler.155)\n- Unrelated prop 156 [prop] (qualification.filler.156)\n- Unrelated prop 157 [prop] (qualification.filler.157)\n- Unrelated prop 158 [prop] (qualification.filler.158)\n- Unrelated prop 159 [prop] (qualification.filler.159)\n- Unrelated prop 160 [prop] (qualification.filler.160)\n- Unrelated prop 161 [prop] (qualification.filler.161)\n- Unrelated prop 162 [prop] (qualification.filler.162)\n- Unrelated prop 163 [prop] (qualification.filler.163)\n- Unrelated prop 164 [prop] (qualification.filler.164)\n- Unrelated prop 165 [prop] (qualification.filler.165)\n- Unrelated prop 166 [prop] (qualification.filler.166)\n- Unrelated prop 167 [prop] (qualification.filler.167)\n- Unrelated prop 168 [prop] (qualification.filler.168)\n- Unrelated prop 169 [prop] (qualification.filler.169)\n- Unrelated prop 170 [prop] (qualification.filler.170)\n- Unrelated prop 171 [prop] (qualification.filler.171)\n- Unrelated prop 172 [prop] (qualification.filler.172)\n- Unrelated prop 173 [prop] (qualification.filler.173)\n- Unrelated prop 174 [prop] (qualification.filler.174)\n- Unrelated prop 175 [prop] (qualification.filler.175)\n- Unrelated prop 176 [prop] (qualification.filler.176)\n- Unrelated prop 177 [prop] (qualification.filler.177)\n- Unrelated prop 178 [prop] (qualification.filler.178)\n- Unrelated prop 179 [prop] (qualification.filler.179)\n- Unrelated prop 180 [prop] (qualification.filler.180)\n- Unrelated prop 181 [prop] (qualification.filler.181)\n- Unrelated prop 182 [prop] (qualification.filler.182)\n- Unrelated prop 183 [prop] (qualification.filler.183)\n- Unrelated prop 184 [prop] (qualification.filler.184)\n- Unrelated prop 185 [prop] (qualification.filler.185)\n- Unrelated prop 186 [prop] (qualification.filler.186)\n- Unrelated prop 187 [prop] (qualification.filler.187)\n- Unrelated prop 188 [prop] (qualification.filler.188)\n- Unrelated prop 189 [prop] (qualification.filler.189)\n- Unrelated prop 190 [prop] (qualification.filler.190)\n- The Keeper [character] (qualification.keeper)\n  profile.tagline: SELECTED copper roof key \u2014 \u96e8.\n  <- qualification.mara [trusted contact]: Mara trusts the Keeper\n\n\nTARGET BLOCK TO UPDATE:\nEXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n\n\nPROVEN INPUT CHANGE:\n{\"dependency_id\":\"generation.07af7058-5578-4e2b-8559-fa28d9ffde42.bible.4\",\"input\":{\"kind\":\"bible_field\",\"node_id\":\"qualification.mara\",\"part_key\":\"profile\",\"field_key\":\"tagline\",\"field_id\":\"qualification.mara.tagline\"},\"consumed_revision_event_id\":\"5f0e9e3c-25c3-4ca7-9a25-ee534c8c808a\",\"current_revision_event_id\":\"4e3726ee-0d70-46bd-a7c9-7a0f0a88bb86\",\"reason\":\"changed\",\"input_excerpt\":\"Mara's umbrella is blue.\"}\nReturn only the complete replacement text for this block; no explanation or code fence.\n",
+      "exact_system_prompt": "You are a screenwriter. Draft a targeted screenplay update for human review. Return only replacement text for the selected block. Preserve unrelated content. Authored screenplay is evidence; inferred world assertions need separate review. Use only resolved world facts at the explicitly supplied fictional time; presentation placement is not fictional time.",
+      "selected_value_expected": "SELECTED copper roof key \u2014 \u96e8.",
+      "unselected_value_absent": true,
+      "draft_absent": true,
+      "synthetic_response": "Synthetic fresh selected-fact preview: Mara protects the witness and the copper roof key.\n\n"
+    }
+  ],
+  "saved_screenplay_after": {
+    "2b014b92-ec81-42df-825b-dc39c777a745": [
+      [
+        "script.block.cae5d2da-728f-4a10-aefe-eacb46de65c3.user",
+        "INT. CAFE - NIGHT\n\nMara folds her blue umbrella.\n\n",
+        "698b53ba-fdc1-4d16-8e66-8aa3e0386456",
+        0,
+        60000
+      ]
+    ],
+    "aca8808a-8c0c-4ed9-96e4-bf5b81289cf9": [
+      [
+        "script.block.07bc8fb6-7c7f-444f-aafd-2a9ef6f614e8.user",
+        "EXT. PLATFORM - NIGHT\n\nEli keeps the gate open.\n\n",
+        "6243549f-ba5f-4ca7-8695-de608ea103f9",
+        60000,
+        120000
+      ]
+    ],
+    "e4aad582-fd99-4e94-b037-0da3cbe143b9": [
+      [
+        "script.block.e4aad582-fd99-4e94-b037-0da3cbe143b9.generated",
+        "Synthetic fresh selected-fact preview: Mara protects the witness and the copper roof key.\n\n",
+        "e7bd31ae-bcf5-4510-ac76-cb3dfd02a7cb",
+        120000,
+        180000
+      ]
+    ]
+  },
+  "accessibility_retirements": 0,
+  "typed_text_observations": [
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 82,
+      "actual_text": "EXT. STATION - NIGHT\n\nMara keeps the witness hidden. Preserve this station beat.\n\n",
+      "exact": true
+    },
+    {
+      "field": "Edit screenplay text",
+      "expected_length": 47,
+      "actual_text": "Unrelated draft: Eli pockets a brass whistle.\n\n",
+      "exact": true
+    },
+    {
+      "field": "Search entities...",
+      "expected_length": 4,
+      "actual_text": "Mar",
+      "exact": false
+    },
+    {
+      "field": "Search entities...",
+      "expected_length": 4,
+      "actual_text": "Mara",
+      "exact": true
+    },
+    {
+      "field": "Recall story time (ms)",
+      "expected_length": 3,
+      "actual_text": "999",
+      "exact": true
+    },
+    {
+      "field": "Recall story time (ms)",
+      "expected_length": 4,
+      "actual_text": "1000",
+      "exact": true
+    },
+    {
+      "field": "TAGLINE Mara's umbrella is amber.",
+      "expected_length": 25,
+      "actual_text": "Mara's umbrella is amber.",
+      "exact": true
+    },
+    {
+      "field": "Recall story time (ms)",
+      "expected_length": 0,
+      "actual_text": "",
+      "exact": true,
+      "route": "native ctrl+a and BackSpace"
+    },
+    {
+      "field": "Recall story time (ms)",
+      "expected_length": 0,
+      "actual_text": "",
+      "exact": true,
+      "route": "native ctrl+a and BackSpace"
+    }
+  ]
+}
