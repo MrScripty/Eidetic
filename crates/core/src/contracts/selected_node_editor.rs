@@ -41,6 +41,8 @@ pub struct SelectedNodeEditorNode {
     pub locked: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub range_read: Option<super::TimelineNodeRangeRead>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name_read: Option<super::TimelineNodeNameRead>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -140,6 +142,7 @@ impl From<&StoryNode> for SelectedNodeEditorNode {
             beat_type: node.beat_type.clone(),
             locked: node.locked,
             range_read: None,
+            name_read: None,
         }
     }
 }

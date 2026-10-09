@@ -187,3 +187,6 @@ boundary, preserving unrelated author drafts and backend source/version custody.
 
 
 `removeScriptBlock` carries the captured block revision and stable command ID through native transport. It shares the screenplay projection response with create/edit commands.
+
+Timeline title transport carries exact text and its owned field read to the
+canonical native rename command; it does not use generic sparse object fields.

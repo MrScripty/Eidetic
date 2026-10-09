@@ -66,6 +66,9 @@ export interface PropagationProposal {
   script_review_binding?: {
     arc_description_applicability_previous?: StoryArcFieldInput[] | null;
     arc_description_applicability_current?: StoryArcFieldInput[] | null;
+    timeline_title_previous?: TimelineTitleInput[] | null;
+    timeline_title_current?: TimelineTitleInput[] | null;
+    timeline_title_absence_revisions?: [string, string][] | null;
     ancestor_notes_previous?: TimelineNotesInput[] | null;
     ancestor_notes_current?: TimelineNotesInput[] | null;
     ancestor_notes_absence_revisions?: [string, string][] | null;
@@ -165,4 +168,10 @@ export interface PropagationProposalListProjection {
 export interface PropagationProposalCommandResponse {
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<PropagationProposalListProjection>;
+}
+
+export interface TimelineTitleInput {
+  node_id: string;
+  name: string;
+  revision_event_id: string | null;
 }

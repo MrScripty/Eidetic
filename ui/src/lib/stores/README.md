@@ -87,6 +87,7 @@ continues.
 | `projectionCacheGuards.ts`                | Projection cache infrastructure     | Provides shared version guards for replace-only projection cache writes.                                                                  | Keep as infrastructure; projection stores should use it instead of ad hoc stale-response checks.              |
 | `projectionRefreshQueue.ts`               | Projection refresh orchestration    | Coalesces backend event/project-triggered projection refreshes and resolves queued waiters during teardown.                                | Keep as the single refresh coalescing owner; do not start per-component refresh state machines.               |
 | `propagationProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend proposal list and replaces cache from command responses with stale-response guards.                                        | Keep.                                                                                                         |
+| `timelineTitleSession.svelte.ts` | Transient UI state | Exact title intent and immutable uncertain retry within the editor session. | Canonical names/history/dependencies remain backend-owned. |
 | `timelinePlacementSession.svelte.ts` | Transient UI state | Captured per-node placement intent and immutable uncertain retry within the editor session. | Canonical placement and review remain backend/projection-owned. |
 | `scriptBlockEditSession.svelte.ts`        | Transient UI state                  | Retains independent block text drafts, captured revisions and immutable pending edits across Script consumer replacement. | Keep session scoped; canonical text and propagation remain backend/projection-owned. |
 | `scriptBlockCreationSession.svelte.ts`    | Transient UI state                  | Retains captured creation context, text and immutable pending payload/ID across Script consumer lifetimes; project activation replaces its owner. | Keep session scoped; canonical screenplay remains backend-owned and projection-backed.                        |
@@ -289,3 +290,6 @@ and failure, project reset, wrong-node payloads and newer request ownership.
 The existing per-block authoring session also owns saved-block removal confirmation and immutable retries. Orphaned removal receipts remain reachable in ScriptPanel after canonical refresh removes their blocks. Removing a block refreshes the document and invalidates derived screenplay context; project retirement clears session ownership.
 
 Session-owner registration runs untracked because block components obtain it through a client derived read; the reactive map still publishes orphan receipt membership to ScriptPanel. A client-compiled regression complements SSR lifetime tests.
+
+`timelineTitleSession` owns transient clip title intents in the current editor
+session; live projection refresh never silently rebases an authored pending title.

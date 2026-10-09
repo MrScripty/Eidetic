@@ -688,3 +688,11 @@ rejection with absent and existing sibling databases.
 
 
 `script_block_remove` removes one exact unlocked saved screenplay block through existing command history and soft-deletion. It records preserved text and sparse segment membership, recaptures canonical blocks/locks under the writer, preserves other blocks and timeline placement, and replays before checking a now-missing block. Existing dependency review exposes deleted consumed material; replacement still requires separate acceptance.
+
+Canonical clip title saving records the exact old/new name through existing
+UserEdit history and rejects stale/ABA reads under the shared timeline writer guard.
+
+`timeline_title_lineage` captures precisely the selected, ancestor, sibling and
+recap titles actually supplied before provider I/O. Existing graph edges and
+proposal bindings support exact impact, stale/ABA refusal, historical/current or
+owned-deletion evidence, and explicit acceptance with refreshed consumed lineage.

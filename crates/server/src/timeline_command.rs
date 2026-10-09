@@ -21,7 +21,8 @@ pub(crate) use crate::timeline_children_history::record_apply_timeline_children_
 pub(crate) use crate::timeline_command_history::{
     record_create_timeline_node_history, record_create_timeline_relationship_history,
     record_delete_timeline_relationship_history, record_set_timeline_node_lock_history,
-    record_set_timeline_node_notes_history, record_set_timeline_node_range_history,
+    record_set_timeline_node_name_history, record_set_timeline_node_notes_history,
+    record_set_timeline_node_range_history,
 };
 pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
 pub(crate) use crate::timeline_node_split_history::record_split_timeline_node_history;

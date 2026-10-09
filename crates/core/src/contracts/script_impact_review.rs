@@ -53,6 +53,13 @@ pub struct ScriptImpactProposalBinding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_description_applicability_current: Option<Vec<super::StoryArcFieldInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_title_previous: Option<Vec<TimelineTitleInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_title_current: Option<Vec<TimelineTitleInput>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeline_title_absence_revisions:
+        Option<Vec<(crate::timeline::node::NodeId, ChangeEventId)>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ancestor_notes_previous: Option<Vec<TimelineNotesInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ancestor_notes_current: Option<Vec<TimelineNotesInput>>,
@@ -96,6 +103,16 @@ pub struct ScriptImpactProposalBinding {
     pub bible_context_scope: Option<super::BibleContextScope>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub script_context_scope: Option<super::ScriptContextScope>,
+}
+
+/// Exact canonical timeline title supplied to a prompt. A missing owned clock
+/// records a known baseline title, not an unknown or fabricated authoring event.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimelineTitleInput {
+    pub node_id: crate::timeline::node::NodeId,
+    pub name: String,
+    pub revision_event_id: Option<ChangeEventId>,
 }
 
 /// Exact Notes evidence, using the existing owned sparse timeline field history.

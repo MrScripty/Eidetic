@@ -70,6 +70,7 @@ fn generate(
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: inputs,
         block: b.clone(),
@@ -318,6 +319,7 @@ fn forged_field_value_refuses_generation_atomically_and_canonical_history_drift_
     captured[0].value = "Forged name".into();
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: Some(captured),
         block: b.clone(),

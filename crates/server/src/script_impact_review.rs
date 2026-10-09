@@ -182,6 +182,7 @@ fn capture_in_snapshot(
         request.generation_event_id,
         &request.segment_id,
     )?;
+    let titles = crate::timeline_title_lineage::preview_inputs(conn, request.generation_event_id)?;
     let ancestors =
         crate::ancestor_notes_lineage::preview_inputs(conn, request.generation_event_id)?;
     let arc_description_applicability_previous =
@@ -192,6 +193,9 @@ fn capture_in_snapshot(
     Ok(ScriptImpactProposalBinding {
         arc_description_applicability_previous,
         arc_description_applicability_current,
+        timeline_title_previous: titles.previous,
+        timeline_title_current: titles.current,
+        timeline_title_absence_revisions: titles.absent,
         ancestor_notes_previous: ancestors.previous,
         ancestor_notes_current: ancestors.current,
         ancestor_notes_absence_revisions: ancestors.absent,
@@ -378,6 +382,7 @@ pub(crate) fn accept_bound_proposal(
     script_document_command::validate_locked_spans(Some(&document), &write)?;
     let generated = GenerateScriptBlockCommand {
         arc_description_applicability: binding.arc_description_applicability_current.clone(),
+        timeline_title_inputs: binding.timeline_title_current.clone(),
         ancestor_notes_inputs: binding.ancestor_notes_current.clone(),
         arc_inputs: binding.arc_inputs.clone(),
         target_binding: None,

@@ -4,6 +4,22 @@ use crate::ai::backend::ChildPlanId;
 use crate::timeline::node::{BeatType, NodeId, StoryLevel};
 use crate::timeline::relationship::{RelationshipId, RelationshipType};
 
+/// Exact canonical title and its owned field clock; None is a known baseline.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TimelineNodeNameRead {
+    pub name: String,
+    pub revision_event_id: Option<super::ChangeEventId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SetTimelineNodeNameCommand {
+    pub node_id: NodeId,
+    pub name: String,
+    pub expected: TimelineNodeNameRead,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SetTimelineNodeRangeCommand {
     pub node_id: NodeId,

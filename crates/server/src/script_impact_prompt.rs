@@ -27,6 +27,7 @@ where
         user: String::new(),
     };
     append_script_context(&mut prompt.user, &binding.script_inputs);
+    crate::timeline_title_lineage::append_prompt(&mut prompt.user, binding);
     if let Some(input) = &binding.timeline_notes_current {
         prompt.user.push_str(&format!(
             "\nCURRENT SELECTED CLIP NOTES:\n{}\n",

@@ -8,6 +8,7 @@ import type {
   DeleteTimelineRelationshipCommand,
   SetTimelineNodeLockCommand,
   SetTimelineNodeNotesCommand,
+  SetTimelineNodeNameCommand,
   SetTimelineNodeRangeCommand,
   SplitTimelineNodeCommand,
   TimelineCommandResponse,
@@ -22,6 +23,17 @@ export function setTimelinePlayhead(positionMs: number): Promise<TimelinePlayhea
   });
 }
 
+export function setTimelineNodeName(
+  payload: SetTimelineNodeNameCommand,
+  commandId = createCommandId(),
+): Promise<TimelineCommandResponse> {
+  const command: CommandEnvelope<SetTimelineNodeNameCommand> = {
+    id: commandId,
+    payload,
+  };
+
+  return invokeDesktop<TimelineCommandResponse>('command_timeline_node_name', { command });
+}
 export function setTimelineNodeRange(
   payload: SetTimelineNodeRangeCommand,
   commandId = createCommandId(),

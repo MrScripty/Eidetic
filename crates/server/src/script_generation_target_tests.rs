@@ -17,6 +17,7 @@ pub(crate) fn fixture() -> (
     block.text = "Synthetic new canonical scene.\n\n".into();
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
         arc_description_applicability: None,
+        timeline_title_inputs: None,
         ancestor_notes_inputs: None,
         arc_inputs: None,
         block,

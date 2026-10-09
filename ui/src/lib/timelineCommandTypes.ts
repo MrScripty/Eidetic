@@ -2,6 +2,16 @@ import type { BeatType, RelationshipId, RelationshipType, StoryLevel } from './t
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
 
+export interface TimelineNodeNameRead {
+  name: string;
+  revision_event_id: string | null;
+}
+export interface SetTimelineNodeNameCommand {
+  node_id: string;
+  name: string;
+  expected: TimelineNodeNameRead;
+}
+
 export interface SetTimelineNodeRangeCommand {
   node_id: string;
   start_ms: number;

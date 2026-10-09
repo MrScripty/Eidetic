@@ -28,6 +28,7 @@
   import BeatChildContext from './BeatChildContext.svelte';
   import BeatEditorHeader from './BeatEditorHeader.svelte';
   import TimelinePlacementEditor from './TimelinePlacementEditor.svelte';
+  import TimelineTitleEditor from './TimelineTitleEditor.svelte';
   import BeatNotesPanel from './BeatNotesPanel.svelte';
   import BeatPlanningActions from './BeatPlanningActions.svelte';
   import ChildPlanReview from './ChildPlanReview.svelte';
@@ -352,6 +353,7 @@
     />
 
     {#if selectedProjectionNode}
+      <TimelineTitleEditor node={selectedProjectionNode} />
       <TimelinePlacementEditor node={selectedProjectionNode} />
     {/if}
 

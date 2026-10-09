@@ -75,6 +75,7 @@ export {
   setTimelinePlayhead,
   setTimelineNodeLock,
   setTimelineNodeNotes,
+  setTimelineNodeName,
   setTimelineNodeRange,
   splitTimelineNode,
 } from './timelineCommandApi.js';
