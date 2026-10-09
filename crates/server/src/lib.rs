@@ -15,6 +15,7 @@ pub mod ai_generation_service;
 pub(crate) mod ai_script_context;
 pub mod ai_service;
 pub(crate) mod ai_temporal_context;
+pub(crate) mod ancestor_notes_lineage;
 pub mod backend_error;
 pub mod backend_task;
 pub(crate) mod bible_context_scope;

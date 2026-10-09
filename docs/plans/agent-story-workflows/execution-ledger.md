@@ -1935,3 +1935,110 @@ clear/deletion/ABA, writer recapture, target edits, both locks and failed stream
 five added UI cases cover exact source evidence and event refresh/draft retention.
 Hosted native qualification is prepared separately, not yet claimed. Synthetic
 HTTP fixtures establish workflow behavior, not real-model narrative quality.
+
+## 2026-10-08 — Exact committed Notes prompt preview successor
+
+Turn startup was verified at 00:27 UTC against public state before writes.
+Reviewed Notes/report branch remained `5a8670d`; PR19/20/21 were open drafts with
+their original heads and no equivalent Notes draft existed. Published PR22 as a
+draft stacked on `feat/manual-edit-bible-reconciliation-review` (PR21), without
+merging or changing those PRs. Root independently verified a31/QA950 source hashes
+and all four native37688763677 review/pending/stale/accepted captures and delivered
+the pending-view JPEG; the earlier executor download blocker is historical.
+
+The next bounded documented Memory read / Projection propagation gap is the
+selected raw AI prompt. `BeatEditor` supplies canonical Notes, but its existing
+request owner deduplicated only node/script revision. The backend public
+`ai_context_preview` already reads canonical SQLite. On exact5a, all six new
+Notes-only regressions failed while seven maintained cases passed. Separate
+`fix/notes-prompt-preview-custody` adds exact committed Notes to that cache identity,
+retaining request-ID stale/ABA/loading guards and ordinary Refresh. No saved
+script/story, draft, proposal, acceptance, backend or Pumas endpoint changes.
+
+New focused lifecycle cases and full557 UI/96-file tests pass, typecheck zero
+errors/warnings, lint/build pass. Native qualification remains the next gate;
+context responses must be real public reads with an explicitly labelled held
+return, never fabricated prompt text. Generated originals/JPEG85/logs stay outside
+Git. Pumas modality publication and project-switch recovery remain separate.
+
+
+## 2026-10-08 — Exact Notes clear/restore qualification closure
+
+Continued existing run37713651568 without restart. Frozen productc5/treeade8 and
+separate QA11b/tree35f pass all hosted source-admission/UI/dependency/build and
+core123/server542/strict-Clippy gates, driver50/policy5 and native exact Notes
+refresh/held real return refusal/clear/exact restoration. Five native PNGs and
+JPEG85 displays are artifact11523381856, ZIP SHA-256
+b4f95daaf9f11d3bcd5043c85249384079f884dcefc4d19c40cd1560bc07e6ff,
+expires2026-10-11T01:44:58Z. Four labelled synthetic fixture calls only; real
+public context reads make no new inference call. Saved screenplay/placement/
+Bible and the unrelated F draft stay intact. Independent c5 source/test/integration
+review found no issue within the selected Notes request-owner scope.
+
+Preserved three qualifier failures: clipped original glyphs, empty input lacking
+BackSpace, and broad restore selector reaching an unsaved Bible Summary draft.
+Only separate QA files changed; exact application files stayed frozen. Native
+machine receipts and full logs are outside Git. Personal visual inspection remains
+blocked by executor transfer proxyHTTP403; retain that gap and exact artifact
+identity. See notes-prompt-preview-qualification.md. No PR19-22/main merge, no
+external reviewer request, credential change or paid model/service call.
+
+## 2026-10-08 — Consumed ancestor Notes boundary reproduced
+
+After closing exact Notes prompt provenance at840f459, selected the documented
+ancestor prose follow-up. Separate test/ancestor-notes-review-gap retains qualified
+application code and adds two actual runtime regressions. Canonical public Notes
+writes and the real formatted generation prompt prove consumption of exact Act
+Notes and exclusion of unrelated Act Notes. The positive reproduction fails at
+missing downstream Scene review; the negative control passes. Both preserve saved
+text/spans/locks/placement/revisions. Output is explicitly synthetic, no model call.
+The known positive is marked ignored for ordinary CI and run explicitly for the
+baseline; this is a test milestone, not a completed feature. Existing locally
+prepared locked Rust dependencies compile without a new ONNX bypass. See
+ancestor-notes-review-gap.md for commands, evidence and bounded reuse contract.
+Locked all-target core123/server543 pass with the one known reproduction ignored;
+strict all-target/all-feature Clippy, Rust format, traceability and policy5 pass.
+
+
+## 2026-10-08 — Owned ancestor Notes propagation implementation
+
+Continued the verified c2659fa boundary on its separate branch. Canonical prompt
+capture now binds nonempty consumed ancestor Notes and owned field clocks before
+provider I/O. Existing generation command JSON, semantic graph dependencies and
+proposal bindings retain exact node identities and original/current evidence.
+Review uses the existing preview/explicit acceptance path; writer-lock checks
+reject changed/cleared/ABA or forged generation evidence. Acceptance refreshes
+ancestor lineage without touching unrelated material. Missing legacy consumption
+remains unknown. No separate store, endpoint, model or embedding dependency.
+
+The executed failing public edit regression is an ordinary passing test. Twelve
+lineage cases cover distinct identities, stale read, forgery, delayed generation,
+manual/locked text, explicit acceptance refresh, clearing, preview/acceptance ABA,
+unrelated/non-Notes events, deletion, legacy absence and synthetic provider failure.
+Locked core123/server556 (zero ignored), full UI558/96, strict Clippy and production
+build pass. Source review is followed by separate hosted native qualification;
+prior Notes closure evidence and PR19-22/main remain preserved and unmerged.
+
+
+## 2026-10-08 — Independent ancestor Notes native acceptance
+
+Frozen product10a2b43/tree06a0d52 (implementatione5fc355) and QAc09b992/treea2bea55
+pass native run37721620953/job113130335009 without a restart. Hosted core123/server556
+(zero ignored), UI558/96, strict Clippy, typecheck0/0, lint/format/build, driver53
+and policy5 pass. Exact ordinary Act Notes edit, two precise consuming Scene
+causes, original/current pending evidence, manual text/draft preservation,
+edit/restore ABA refusal and fresh explicit acceptance pass. Only B updates;
+A retains its cause. The unrelated Act gains no new ancestor-Notes cause, while
+pre-existing review flags from other causes remain. Six labelled synthetic
+HTTP/SSE calls; real-model quality is unqualified.
+
+Root independently accepted exact source and visually inspected all five native
+captures, verifying PNG/JPEG/ZIP and UI source hashes. No blocking source finding
+for this bounded gate. Root transfer worked despite the executor's preserved
+proxy403; author audit is separate and no author visual claim is made.
+Artifact11526418204/ZIPb068ff3aba6556eac820fac2495638e67c17d82ccfaa73d0bb53f89ee71625f6
+expires2026-10-11T03:24:58Z; pending-preview JPEG delivered by root. Three failed/
+partial attempts and prior selected Notes closure evidence stay preserved.
+See ancestor-notes-qualification.md. This successor changes documentation only;
+application source stays byte-identical to qualified10a2b43. Source-only stacked
+draft publication is authorized; no main/PR19-22 merge or external reviewer request.

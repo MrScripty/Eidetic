@@ -64,6 +64,9 @@ export interface PropagationProposal {
   created_at_ms: number;
   script_fact_binding?: import('./scriptFactTypes.js').ScriptFactProposalBinding | null;
   script_review_binding?: {
+    ancestor_notes_previous?: TimelineNotesInput[] | null;
+    ancestor_notes_current?: TimelineNotesInput[] | null;
+    ancestor_notes_absence_revisions?: [string, string][] | null;
     timeline_notes_previous?: TimelineNotesInput | null;
     timeline_notes_current?: TimelineNotesInput | null;
     arc_inputs?: StoryArcFieldInput[] | null;

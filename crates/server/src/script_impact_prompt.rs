@@ -33,6 +33,23 @@ where
             input.notes
         ));
     }
+    for input in binding.ancestor_notes_current.iter().flatten() {
+        prompt.user.push_str(&format!(
+            "\nCURRENT CONSUMED ANCESTOR NOTES ({}):\n{}\n",
+            input.node_id.0,
+            if input.notes.is_empty() {
+                "(cleared)"
+            } else {
+                &input.notes
+            },
+        ));
+    }
+    for (node, _) in binding.ancestor_notes_absence_revisions.iter().flatten() {
+        prompt.user.push_str(&format!(
+            "\nPREVIOUSLY CONSUMED ANCESTOR REMOVED: {}\n",
+            node.0
+        ));
+    }
     crate::story_arc_lineage::append_prompt(
         &mut prompt.user,
         binding.arc_inputs.as_deref().unwrap_or_default(),

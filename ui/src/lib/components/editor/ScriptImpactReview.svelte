@@ -135,6 +135,18 @@
           previous={proposal.script_review_binding?.timeline_notes_previous}
           current={proposal.script_review_binding?.timeline_notes_current}
         />
+        {#each proposal.script_review_binding?.ancestor_notes_previous ?? [] as previous (previous.node_id)}
+          <ScriptTimelineNotesEvidence
+            ancestor={true}
+            {previous}
+            current={proposal.script_review_binding?.ancestor_notes_current?.find(
+              (input) => input.node_id === previous.node_id,
+            )}
+            absentRevision={proposal.script_review_binding?.ancestor_notes_absence_revisions?.find(
+              ([node]) => node === previous.node_id,
+            )?.[1]}
+          />
+        {/each}
         <ScriptArcEvidence
           previous={proposal.script_review_binding?.arc_previous_inputs}
           current={proposal.script_review_binding?.arc_inputs}

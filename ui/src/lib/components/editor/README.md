@@ -9,8 +9,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `createSelectedTimelineChild.ts` | Existing canonical create-child command and guarded selection after acknowledgement. |
 | `createSelectedTimelineChild.svelte.test.ts` | Delayed selection, same-ID session reset and unmounted editor acknowledgement regressions. |
 | `BeatEditor.svelte` | Primary node editing surface for notes, generation, and context panels. |
-| `contextRequestLifecycle.ts` | Prompt request invalidation, loading cleanup and stale-response guards. |
-| `contextRequestLifecycle.test.ts` | Empty notes/selection invalidation and delayed response ordering. |
+| `contextRequestLifecycle.ts` | Exact committed Notes/node/script-revision cache identity, loading cleanup and stale-response guards. |
+| `contextRequestLifecycle.test.ts` | Exact Notes edits, Notes ABA, manual Refresh interleavings, read failures and empty/selection invalidation. |
 | `BeatChildContext.svelte` | Context panel for child nodes, including parent, siblings, and adjacent parent-level nodes. |
 | `BeatEditorHeader.svelte` | Header controls for lock state and AI generation. |
 | `BeatNotesPanel.svelte` | Notes editor, generation status, and prompt preview container. |
@@ -150,6 +150,12 @@ draft, proposal and acceptance owners remain authoritative.
 - Clearing notes or selection invalidates the pending context request and clears
   loading immediately. Older successes, failures and finally callbacks cannot
   restore stale context or clear the loading state of a newer request.
+- Nonempty committed Notes changes also invalidate that same prompt request owner,
+  even when the selected node and screenplay revision are unchanged. Compare exact
+  Notes, including Unicode and whitespace; discard the older preview while the
+  canonical read is pending or unavailable. Notes ABA and overlapping manual
+  Refresh retain the existing request-ID admission. This is read-only cache
+  propagation; screenplay/draft/proposal owners and acceptance are unchanged.
 - Future decomposition preserves current user-facing editor workflows.
 
 ## Revisit Triggers
@@ -232,3 +238,10 @@ NodeUpdated queue refreshes impact/context while preserving edit/placement draft
 No preview, notes save or evidence display replaces saved screenplay. Only explicit
 Accept update installs the selected block and its current consumed lineage.
 Ancestor/sibling prose and other timeline fields remain separate scope.
+
+Ancestor Notes review reuses `ScriptTimelineNotesEvidence` in the existing selected
+screenplay update proposals. Each proven consumed ancestor displays its exact
+original/current Notes and owned revisions, with explicit removal evidence when
+available. The impact notice distinguishes ancestor Notes from selected clip Notes
+and context membership. Preview, rejection, acceptance and manual draft ownership
+retain the existing controllers; displaying evidence never writes saved text.

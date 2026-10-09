@@ -96,6 +96,20 @@ it('shows Notes evidence beside saved/proposed screenplay and explicit acceptanc
         notes: '  Current exact Notes — 雨.\n\n  ',
         revision_event_id: 'notes.current',
       },
+      ancestor_notes_previous: [
+        {
+          node_id: 'act.A',
+          notes: '  Exact original Act Notes — 雨.\n\n  ',
+          revision_event_id: 'act.original',
+        },
+      ],
+      ancestor_notes_current: [
+        {
+          node_id: 'act.A',
+          notes: '  Exact current Act Notes — 雨.\n\n  ',
+          revision_event_id: 'act.current',
+        },
+      ],
     },
   };
   const other = {
@@ -117,6 +131,9 @@ it('shows Notes evidence beside saved/proposed screenplay and explicit acceptanc
   expect(body).toContain(proposal.proposed_text!);
   expect(body).toContain(proposal.script_review_binding!.timeline_notes_previous!.notes);
   expect(body).toContain(proposal.script_review_binding!.timeline_notes_current!.notes);
+  expect(body).toContain('Ancestor Notes used for this update');
+  expect(body).toContain(proposal.script_review_binding!.ancestor_notes_previous![0]!.notes);
+  expect(body).toContain(proposal.script_review_binding!.ancestor_notes_current![0]!.notes);
   expect(body).toContain('Accept update');
   expect(body).toContain('Reject');
   expect(body).not.toContain('Unrelated proposed screenplay');

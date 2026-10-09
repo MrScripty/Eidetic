@@ -146,6 +146,10 @@ pub(crate) fn load_impact(
     {
         causes.push(cause);
     }
+    causes.extend(crate::ancestor_notes_lineage::impact(
+        conn,
+        generation_event_id,
+    )?);
     Ok(Some(ScriptImpactProjection {
         generation_event_id,
         output_block_id: Some(

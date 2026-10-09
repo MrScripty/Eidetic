@@ -57,6 +57,7 @@ fn generate(
     relationships: Option<Vec<BibleRelationshipInput>>,
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        ancestor_notes_inputs: None,
         arc_inputs: None,
         block: b.clone(),
         script_inputs: Some(vec![]),

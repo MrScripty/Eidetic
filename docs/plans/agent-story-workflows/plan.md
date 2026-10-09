@@ -1,6 +1,24 @@
 # Agent-assisted story workflows
 
 **Status:** Active
+**Ancestor Notes propagation independently accepted:** Generation now
+records exact consumed nonempty ancestor Notes with owned field revisions and
+precise graph dependency identities. Existing review shows original/current
+ancestor evidence; pending generation, preview and acceptance reject stale/ABA
+reads, and saved/manual/locked material stays intact until explicit acceptance.
+The c2659fa failing reproduction is now an ordinary passing test. Locked
+core123/server556, UI558/96 and strict Clippy pass. See
+`ancestor-notes-review-gap.md` and `ancestor-notes-qualification.md`. Frozen product10a2b43 / QAc09b992 passes native run37721620953, core123/server556/UI558/96 and maintained gates. Root independently reviewed exact source and all five native images, verifying artifact/source hashes. Review applies to the bounded synthetic gate; real-model quality remains unqualified. The unrelated Act gains no new ancestor-Notes cause and retains pre-existing causes.
+**Selected Notes prompt follow-up qualified:** Frozen product `c5fad5c` / QA
+`11b60a9` passes native run37713651568: exact committed Notes refresh, older real
+return refusal, clear and exact restoration, saved material and unrelated draft
+preservation. Hosted core123/server542/UI557/96 and maintained gates pass. Five
+source-bound PNG originals/JPEG85 derivatives are artifact11523381856. Personal
+visual inspection remains blocked by executor transfer HTTP403; parent retains
+inspection/durable delivery. See `notes-prompt-preview-qualification.md`.
+PR22 remains a draft on reviewed Notes/report head `5a8670d`; PR19-22/main are
+untouched. This uses the existing public read and request owner, with no new
+model, embedding dependency or acceptance behavior. Pumas publication stays separate.
 **Separate timeline Notes successor:** PR21 `1bf7873` preserves exact placement,
 Bible and screenplay review flows. A source regression proves public authored
 Notes changed after generation has no review cause. The bounded successor reuses

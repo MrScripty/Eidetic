@@ -3,6 +3,158 @@ use crate::project_service::replace_active_project;
 use eidetic_core::{Error, Template};
 use futures::stream;
 
+const CONSUMED_ANCESTOR_NOTES: &str = "  Mara conceals the witness — 雨.\n\n  ";
+const UNCONSUMED_ACT_NOTES: &str = "Eli keeps a brass whistle in the unrelated Act.";
+
+async fn ancestor_notes_fixture() -> (Fixture, NodeId, NodeId) {
+    use eidetic_core::timeline::node::StoryLevel;
+    let mut fixture = fixture().await;
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let scene = project.timeline.nodes_at_level(StoryLevel::Scene)[0];
+    fixture.node_id = scene.id;
+    let ancestor = scene.parent_id.unwrap();
+    let unrelated = project
+        .timeline
+        .nodes_at_level(StoryLevel::Act)
+        .into_iter()
+        .find(|node| node.id != ancestor)
+        .unwrap()
+        .id;
+    set_fixture_notes(&fixture, ancestor, CONSUMED_ANCESTOR_NOTES).await;
+    set_fixture_notes(&fixture, unrelated, UNCONSUMED_ACT_NOTES).await;
+    let (project, _) = active_sqlite_project(&fixture.state).await.unwrap();
+    let mut request =
+        eidetic_core::ai::prompt::build_generate_request(&project, fixture.node_id).unwrap();
+    crate::ai_service::attach_ai_generation_context(
+        &mut request,
+        fixture.path.clone(),
+        fixture.node_id,
+    )
+    .await
+    .unwrap();
+    assert!(
+        request
+            .ancestor_chain
+            .iter()
+            .any(|node| { node.id == ancestor && node.content.notes == CONSUMED_ANCESTOR_NOTES })
+    );
+    let prompt = crate::prompt_format::build_chat_prompt(&request).user;
+    assert!(prompt.contains(CONSUMED_ANCESTOR_NOTES));
+    assert!(!prompt.contains(UNCONSUMED_ACT_NOTES));
+    // Explicitly synthetic output; use the existing canonical generation writer.
+    // This qualifies prompt consumption and lineage, not model narrative quality.
+    persist_generated_script_block(
+        fixture.path.clone(),
+        fixture.node_id.0,
+        "Synthetic screenplay: Mara conceals the witness.".into(),
+        GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
+            arc_inputs: request.arc_inputs,
+            script_inputs: request.script_context,
+            bible_inputs: request.bible_inputs,
+            bible_node_name_inputs: request.bible_node_name_inputs,
+            bible_relationship_inputs: request.bible_relationship_inputs,
+            bible_context_scope: request.bible_context_scope,
+            script_context_scope: request.script_context_scope,
+            target_binding: request.generation_target,
+            ..GenerationInputs::default()
+        },
+    )
+    .await
+    .unwrap();
+    (fixture, ancestor, unrelated)
+}
+
+async fn set_fixture_notes(fixture: &Fixture, node_id: NodeId, notes: &str) {
+    use eidetic_core::contracts::{CommandEnvelope, SetTimelineNodeNotesCommand};
+    crate::command_service::set_timeline_node_notes(
+        &fixture.state,
+        CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            node_id,
+            notes: notes.into(),
+        }),
+    )
+    .await
+    .unwrap();
+}
+
+fn assert_saved_material_unchanged(
+    before: &eidetic_core::contracts::ScriptDocumentProjection,
+    after: &eidetic_core::contracts::ScriptDocumentProjection,
+) {
+    assert_eq!(before.document, after.document);
+    assert_eq!(before.segments.len(), after.segments.len());
+    for (before, after) in before.segments.iter().zip(&after.segments) {
+        assert_eq!(before.segment, after.segment);
+        assert_eq!(before.blocks, after.blocks);
+    }
+}
+
+#[tokio::test]
+async fn public_consumed_ancestor_notes_edit_marks_saved_scene_for_review() {
+    use eidetic_core::contracts::SemanticDependencyEndpoint;
+    let (fixture, ancestor, _) = ancestor_notes_fixture().await;
+    let before = script(&fixture);
+    assert!(
+        before
+            .payload
+            .segments
+            .iter()
+            .all(|segment| { !segment.impact.as_ref().unwrap().needs_review })
+    );
+    set_fixture_notes(&fixture, ancestor, "  Mara reveals the witness — 雨.\n\n  ").await;
+    let after = script(&fixture);
+    assert_saved_material_unchanged(&before.payload, &after.payload);
+    let segment = after
+        .payload
+        .segments
+        .iter()
+        .find(|segment| {
+            segment.segment.source_node_id.as_deref()
+                == Some(fixture.node_id.0.to_string().as_str())
+        })
+        .unwrap();
+    let impact = segment.impact.as_ref().unwrap().clone();
+    fixture.state.shutdown_tasks_async().await;
+    assert!(
+        impact.needs_review,
+        "Exact ancestor Notes supplied to generation changed without downstream scene review"
+    );
+    assert!(impact.causes.iter().any(|cause| {
+        cause.input == SemanticDependencyEndpoint::TimelineNode { node_id: ancestor }
+            && cause.input_excerpt.as_deref() == Some(CONSUMED_ANCESTOR_NOTES)
+    }));
+}
+
+#[tokio::test]
+async fn public_unconsumed_act_notes_edit_preserves_saved_scene_review_state() {
+    let (fixture, _, unrelated) = ancestor_notes_fixture().await;
+    let before = script(&fixture);
+    set_fixture_notes(
+        &fixture,
+        unrelated,
+        "Eli discards the unrelated brass whistle.",
+    )
+    .await;
+    let after = script(&fixture);
+    assert_saved_material_unchanged(&before.payload, &after.payload);
+    assert_eq!(
+        before
+            .payload
+            .segments
+            .iter()
+            .map(|segment| &segment.impact)
+            .collect::<Vec<_>>(),
+        after
+            .payload
+            .segments
+            .iter()
+            .map(|segment| &segment.impact)
+            .collect::<Vec<_>>()
+    );
+    fixture.state.shutdown_tasks_async().await;
+}
+
 #[tokio::test]
 async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
     use eidetic_core::contracts::*;
@@ -38,6 +190,7 @@ async fn public_consumed_bible_name_edit_marks_saved_screenplay_for_review() {
         fixture.node_id.0,
         "Synthetic screenplay starring Mara.".into(),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
@@ -144,6 +297,7 @@ async fn public_relationship_edit_publishes_affected_review_from_original_genera
             "Synthetic screenplay: Mara trusts Eli.".into()
         )])),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_inputs: request.bible_inputs,
@@ -261,6 +415,7 @@ async fn independent_real_service_bible_fact_capture_output_and_manual_change_pu
             "Synthetic fixture screenplay: Mara carries red.".into(),
         )])),
         GenerationInputs {
+            ancestor_notes_inputs: request.ancestor_notes_inputs,
             arc_inputs: request.arc_inputs,
             script_inputs: request.script_context,
             bible_node_name_inputs: request.bible_node_name_inputs,

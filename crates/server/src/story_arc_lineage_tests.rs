@@ -69,6 +69,7 @@ fn generate(
     inputs: Option<Vec<StoryArcFieldInput>>,
 ) -> CommandEnvelope<GenerateScriptBlockCommand> {
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        ancestor_notes_inputs: None,
         arc_inputs: inputs,
         block: b.clone(),
         script_inputs: Some(vec![]),
@@ -315,6 +316,7 @@ fn forged_field_value_refuses_generation_atomically_and_canonical_history_drift_
     let mut captured = inputs(&conn, &b);
     captured[0].value = "Forged name".into();
     let command = CommandEnvelope::new(GenerateScriptBlockCommand {
+        ancestor_notes_inputs: None,
         arc_inputs: Some(captured),
         block: b.clone(),
         script_inputs: Some(vec![]),

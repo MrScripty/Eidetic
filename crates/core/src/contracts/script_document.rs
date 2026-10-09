@@ -258,6 +258,9 @@ pub struct ScriptGenerationTarget {
 /// Internal generation commit: its captured evidence is part of the replay signature.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GenerateScriptBlockCommand {
+    /// Captured before provider I/O; absent legacy consumption stays unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ancestor_notes_inputs: Option<Vec<super::TimelineNotesInput>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub arc_inputs: Option<Vec<super::StoryArcFieldInput>>,
     pub block: SetScriptBlockCommand,
