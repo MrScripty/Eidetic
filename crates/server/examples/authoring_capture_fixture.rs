@@ -41,6 +41,7 @@ async fn prepare(state: &AppState) -> Result<serde_json::Value, Box<dyn std::err
     command_service::set_timeline_node_notes(
         state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: b.id,
             notes: "Eli waits for Mara at the station. Continue the preceding screenplay.".into(),
         }),

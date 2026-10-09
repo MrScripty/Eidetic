@@ -383,6 +383,9 @@ fn load_selected_node_editor_at_path(
         .as_mut()
         .filter(|node| canonical_node_ids.contains(&node.node_id))
     {
+        node.notes_read = Some(
+            crate::timeline_notes_lineage::capture(&tx, node.node_id).map_err(map_history_error)?,
+        );
         node.name_read = Some(eidetic_core::contracts::TimelineNodeNameRead {
             name: node.name.clone(),
             revision_event_id: timeline_node_store::latest_name_event(&tx, node.node_id, None)

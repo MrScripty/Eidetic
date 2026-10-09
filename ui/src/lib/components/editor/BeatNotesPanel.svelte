@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { StoryNode } from '$lib/timelineTypes.js';
+  import type { SelectedNodeEditorNode } from '$lib/selectedNodeEditorTypes.js';
+  import TimelineNotesEditor from './TimelineNotesEditor.svelte';
   import AiPromptPreview from './AiPromptPreview.svelte';
 
   let {
@@ -9,7 +11,7 @@
     generationError,
     nodeContext,
     contextLoading,
-    onnotesinput,
+    editorNode,
     onrefreshcontext,
   }: {
     node: StoryNode;
@@ -18,21 +20,13 @@
     generationError: string | null;
     nodeContext: { system: string; user: string } | null;
     contextLoading: boolean;
-    onnotesinput: (event: Event) => void;
+    editorNode: SelectedNodeEditorNode;
     onrefreshcontext: () => void;
   } = $props();
 </script>
 
 <div class="editor-body">
-  <label class="section-label" for={`notes-${node.id}`}>Notes</label>
-  <textarea
-    id={`notes-${node.id}`}
-    class="notes-input"
-    placeholder="Describe what happens in this {node.level.toLowerCase()}..."
-    value={node.content.notes}
-    oninput={onnotesinput}
-    disabled={node.locked}
-  ></textarea>
+  <TimelineNotesEditor node={editorNode} />
   {#if isGenerating}
     <div class="section-label section-label-row">
       Generating

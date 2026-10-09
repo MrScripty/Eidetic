@@ -104,6 +104,7 @@ async fn fixture() -> Fixture {
     command_service::set_timeline_node_notes(
         &state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: b,
             notes: NOTES.into(),
         }),
@@ -414,6 +415,7 @@ async fn delayed_http_after_new_scene_notes_aba_preserves_canonical_manual_scrip
         command_service::set_timeline_node_notes(
             &f.state,
             CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id: f.node,
                 notes: notes.into(),
             }),

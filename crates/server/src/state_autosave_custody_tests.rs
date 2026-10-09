@@ -35,6 +35,7 @@ async fn autosave_custody_holds_snapshot_and_document_until_persistence_finishes
             &mut conn,
             project,
             &CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id: node,
                 notes: notes.into(),
             }),

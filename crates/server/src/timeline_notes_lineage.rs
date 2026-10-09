@@ -16,14 +16,24 @@ pub(crate) fn owned_revision(
     node: NodeId,
     through: Option<ChangeEventId>,
 ) -> Result<Option<ChangeEventId>, HistoryStoreError> {
+    owned_revision_excluding(conn, node, through, None)
+}
+
+fn owned_revision_excluding(
+    conn: &Connection,
+    node: NodeId,
+    through: Option<ChangeEventId>,
+    exclude: Option<ChangeEventId>,
+) -> Result<Option<ChangeEventId>, HistoryStoreError> {
     let event: Option<String> = conn.query_row(
         "SELECT r.change_event_id FROM object_revisions r JOIN change_events e ON e.id=r.change_event_id
          WHERE r.object_kind='timeline_node' AND r.object_id=?1
          AND (r.operation='delete' OR EXISTS(SELECT 1 FROM object_revision_fields f
              WHERE f.revision_id=r.id AND f.field_key='notes'))
+         AND (?3 IS NULL OR e.id != ?3)
          AND (?2 IS NULL OR e.rowid <= (SELECT rowid FROM change_events WHERE id=?2))
          ORDER BY e.rowid DESC,r.rowid DESC LIMIT 1",
-        params![node.0.to_string(), through.map(|event| event.0.to_string())], |row| row.get(0)
+        params![node.0.to_string(), through.map(|event| event.0.to_string()), exclude.map(|event| event.0.to_string())], |row| row.get(0)
     ).optional()?;
     event
         .map(|event| {
@@ -95,6 +105,15 @@ pub(crate) fn capture(
     conn: &Connection,
     node: NodeId,
 ) -> Result<TimelineNotesInput, HistoryStoreError> {
+    capture_excluding(conn, node, None)
+}
+
+/// Writer guards exclude their tentative event while sharing the owned Notes clock.
+pub(crate) fn capture_excluding(
+    conn: &Connection,
+    node: NodeId,
+    exclude: Option<ChangeEventId>,
+) -> Result<TimelineNotesInput, HistoryStoreError> {
     let node = crate::timeline_node_store::load_node_ancestor_stack(conn, node)?
         .into_iter()
         .find(|candidate| candidate.id == node)
@@ -102,7 +121,30 @@ pub(crate) fn capture(
     let input = TimelineNotesInput {
         node_id: node.id,
         notes: node.content.notes,
-        revision_event_id: owned_revision(conn, node.id, None)?,
+        revision_event_id: owned_revision_excluding(conn, node.id, None, exclude)?,
+    };
+    validate_history(conn, &input)?;
+    Ok(input)
+}
+
+/// Recover this command's original owned receipt, including an acknowledgement retry.
+/// A later Notes edit never becomes this save's acknowledgement.
+pub(crate) fn command_receipt(
+    conn: &Connection,
+    command: &CommandEnvelope<SetTimelineNodeNotesCommand>,
+) -> Result<TimelineNotesInput, HistoryStoreError> {
+    let event: String = conn.query_row(
+        "SELECT id FROM change_events WHERE command_id=?1",
+        [command.id.0.to_string()],
+        |row| row.get(0),
+    )?;
+    let input = TimelineNotesInput {
+        node_id: command.payload.node_id,
+        notes: command.payload.notes.clone(),
+        revision_event_id: Some(ChangeEventId(
+            uuid::Uuid::parse_str(&event)
+                .map_err(|error| HistoryStoreError::InvalidId(error.to_string()))?,
+        )),
     };
     validate_history(conn, &input)?;
     Ok(input)

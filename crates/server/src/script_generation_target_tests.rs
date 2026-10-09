@@ -83,6 +83,7 @@ fn manual_timeline_notes_edit_marks_its_saved_generated_screenplay_for_review() 
             &mut conn,
             &project,
             &CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id,
                 notes: notes.into(),
             }),
@@ -212,6 +213,7 @@ fn notes_edit_and_restore_advances_target_revision_and_refuses_delayed_output() 
             &mut conn,
             &project,
             &CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id,
                 notes: notes.clone(),
             }),

@@ -75,6 +75,7 @@ impl Fixture {
                 .unwrap();
             let mut conn = crate::sqlite::open_write_connection(path).unwrap();
             let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id: node,
                 notes: notes.into(),
             });
@@ -132,6 +133,7 @@ async fn postcommit_events_wait_for_document_enqueue_before_project_transition()
     proxy.send(DocCommand::Serialize { reply }).await.unwrap();
     let mut events = fixture.state.events_tx.subscribe();
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "A queued document edit".into(),
     });
@@ -215,6 +217,7 @@ async fn postcommit_notes_finish_before_project_load_and_preserve_existing_histo
     let history_b = history(&fixture.path_b);
     let held = fixture.state.project_session_gate.lock().await;
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "A committed edit".into(),
     });
@@ -284,6 +287,7 @@ async fn queued_command_rejects_same_path_reopen_without_events_or_history() {
     let mut events = fixture.state.events_tx.subscribe();
     let held = fixture.state.project_session_gate.lock().await;
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "obsolete".into(),
     });
@@ -326,6 +330,7 @@ async fn queued_command_rejects_save_as_without_writing_either_database() {
     ));
     assert_pending(save.as_mut());
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "obsolete".into(),
     });
@@ -488,6 +493,7 @@ async fn failed_document_population_returns_error_without_publishing_project() {
 async fn failed_postcommit_document_send_reports_committed_failure() {
     let fixture = Fixture::new().await;
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "committed before doc failure".into(),
     });
@@ -526,6 +532,7 @@ async fn transition_reopen_keeps_committed_notes_in_sqlite_and_document() {
     set_timeline_node_notes(
         &fixture.state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: fixture.node,
             notes: "A edit after earlier blob".into(),
         }),
@@ -578,6 +585,7 @@ async fn transition_save_as_copies_committed_source_timeline_and_document() {
     set_timeline_node_notes(
         &fixture.state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: fixture.node,
             notes: "committed source notes".into(),
         }),
@@ -803,6 +811,7 @@ async fn transition_cancelled_notes_caller_still_publishes_and_flushes_source_do
     let (reply, serialized) = tokio::sync::oneshot::channel();
     proxy.send(DocCommand::Serialize { reply }).await.unwrap();
     let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: fixture.node,
         notes: "A edit survives cancelled response".into(),
     });
@@ -893,6 +902,7 @@ async fn normal_runtime_repeated_commands_bound_completed_supervisor_records() {
         set_timeline_node_notes(
             &fixture.state,
             CommandEnvelope::new(SetTimelineNodeNotesCommand {
+                expected: None,
                 node_id: fixture.node,
                 notes: format!("normal command {index}"),
             }),
@@ -975,6 +985,7 @@ async fn assert_same_project_aliases_preserve_custody(fixture: Fixture, spelling
     let mut edit = Box::pin(set_timeline_node_notes(
         &fixture.state,
         CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: fixture.node,
             notes: "alias-admitted edit".into(),
         }),

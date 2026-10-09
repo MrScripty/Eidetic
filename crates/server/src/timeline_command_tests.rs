@@ -176,6 +176,7 @@ fn set_timeline_node_notes_updates_projection_status() {
     let command = CommandEnvelope {
         id: CommandId::new(),
         payload: SetTimelineNodeNotesCommand {
+            expected: None,
             node_id,
             notes: "New outline".to_string(),
         },
@@ -202,6 +203,7 @@ fn set_timeline_node_notes_rejects_unknown_node() {
     let command = CommandEnvelope {
         id: CommandId::new(),
         payload: SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: NodeId::new(),
             notes: "New outline".to_string(),
         },

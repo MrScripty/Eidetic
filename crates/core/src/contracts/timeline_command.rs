@@ -87,6 +87,8 @@ pub struct SetTimelineNodeLockCommand {
 pub struct SetTimelineNodeNotesCommand {
     pub node_id: NodeId,
     pub notes: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected: Option<super::TimelineNotesInput>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

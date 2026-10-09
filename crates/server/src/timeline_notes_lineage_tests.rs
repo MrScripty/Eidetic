@@ -15,6 +15,7 @@ pub(crate) fn notes(conn: &mut Connection, project: &mut Project, node: NodeId, 
         conn,
         project,
         &CommandEnvelope::new(SetTimelineNodeNotesCommand {
+            expected: None,
             node_id: node,
             notes: text.into(),
         }),
@@ -459,4 +460,36 @@ fn historical_target_receipt_rejects_forged_notes_and_other_node_clock() {
         .unwrap()
         .id;
     assert!(from_target(&conn, &target).is_err());
+}
+
+#[test]
+fn explicit_guarded_notes_save_updates_existing_impact_without_replacing_any_saved_screenplay() {
+    let (mut conn, mut project, generation) = setup();
+    let node = generation.payload.target_binding.as_ref().unwrap().node_id;
+    let material = materials(&conn);
+    project.timeline.nodes = timeline_node_store::load_nodes(&conn).unwrap();
+    let expected = capture(&conn, node).unwrap();
+    let command = CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        node_id: node,
+        notes: NEW.into(),
+        expected: Some(expected),
+    });
+    timeline_command_history::record_set_timeline_node_notes_history(
+        &mut conn, &project, &command, 300,
+    )
+    .unwrap();
+    project.timeline.nodes = timeline_node_store::load_nodes(&conn).unwrap();
+    assert_eq!(materials(&conn), material);
+    let affected = impact(&conn, &generation);
+    assert!(!affected.causes.is_empty());
+    assert!(
+        affected
+            .causes
+            .iter()
+            .any(|cause| cause.input == SemanticDependencyEndpoint::TimelineNode { node_id: node })
+    );
+    assert_eq!(
+        command_receipt(&conn, &command).unwrap(),
+        capture(&conn, node).unwrap()
+    );
 }

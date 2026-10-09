@@ -51,6 +51,7 @@ fn fixture() -> (Connection, Project) {
 
 fn notes_command(project: &Project) -> CommandEnvelope<SetTimelineNodeNotesCommand> {
     CommandEnvelope::new(SetTimelineNodeNotesCommand {
+        expected: None,
         node_id: project.timeline.nodes[0].id,
         notes: "Intervening human edit".into(),
     })

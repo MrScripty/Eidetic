@@ -26,6 +26,8 @@ pub use crate::command_service_timeline_requests::{
 #[derive(Debug, Serialize)]
 pub struct TimelineCommandResponse {
     outcome: RecordChangeOutcome,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    notes_read: Option<eidetic_core::contracts::TimelineNotesInput>,
     projection: ProjectionEnvelope<TimelineRenderProjection>,
 }
 
@@ -89,6 +91,7 @@ async fn create_timeline_node_at_admission(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -152,6 +155,7 @@ pub async fn set_timeline_node_name(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -205,6 +209,7 @@ pub async fn set_timeline_node_range(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -245,6 +250,7 @@ pub async fn set_timeline_node_lock(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -282,12 +288,26 @@ pub async fn set_timeline_node_notes(
             let outcome = timeline_command::record_set_timeline_node_notes_history(
                 &mut conn, &project, &command, 0,
             )
-            .map_err(map_timeline_command_error)?;
+            .map_err(|error| {
+                let error = map_timeline_command_error(error);
+                match error {
+                    BackendError::BadRequest(message) if command.payload.expected.is_some() => {
+                        BackendError::bad_request(format!("Notes edit refused: {message}"))
+                    }
+                    BackendError::Conflict(message) if command.payload.expected.is_some() => {
+                        BackendError::conflict(format!("Notes edit refused: {message}"))
+                    }
+                    error => error,
+                }
+            })?;
+            let notes_read = crate::timeline_notes_lineage::command_receipt(&conn, &command)
+                .map_err(map_history_error)?;
             let projection =
                 timeline_render_projection_from_current_state(&conn, &project.timeline)
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: Some(notes_read),
                 projection,
             })
         })
@@ -344,6 +364,7 @@ pub async fn delete_timeline_node(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -394,6 +415,7 @@ pub async fn delete_timeline_relationship(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -442,6 +464,7 @@ pub async fn create_timeline_relationship_from_core_command(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -485,6 +508,7 @@ pub async fn apply_timeline_children(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })
@@ -584,6 +608,7 @@ pub async fn split_timeline_node_from_core_command(
                     .map_err(map_timeline_command_error)?;
             Ok::<_, BackendError>(TimelineCommandResponse {
                 outcome,
+                notes_read: None,
                 projection,
             })
         })

@@ -1,3 +1,4 @@
+import type { TimelineNotesInput } from './propagationProposalTypes.js';
 import type { BeatType, RelationshipId, RelationshipType, StoryLevel } from './timelineTypes.js';
 import type { CommandOutcome, ProjectionEnvelope } from './projectionTypes.js';
 import type { TimelineRenderProjection } from './timelineRenderTypes.js';
@@ -44,6 +45,7 @@ export interface SetTimelineNodeLockCommand {
 export interface SetTimelineNodeNotesCommand {
   node_id: string;
   notes: string;
+  expected?: TimelineNotesInput;
 }
 
 export interface CreateTimelineNodeCommand {
@@ -90,6 +92,7 @@ export interface DeleteTimelineRelationshipCommand {
 }
 
 export interface TimelineCommandResponse {
+  notes_read?: TimelineNotesInput | null;
   outcome: CommandOutcome;
   projection: ProjectionEnvelope<TimelineRenderProjection>;
 }
