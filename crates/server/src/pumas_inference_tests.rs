@@ -19,6 +19,8 @@ pub(crate) struct Fixture {
     pub(crate) url: String,
     pub(crate) requests: Arc<Mutex<Vec<(String, Value)>>>,
     revision: Arc<AtomicUsize>,
+    dimensions: Arc<AtomicUsize>,
+    unload_response: Arc<Mutex<Option<Value>>>,
     fail_embedding: Arc<AtomicBool>,
     unavailable: Arc<AtomicBool>,
     loaded: Arc<AtomicBool>,
@@ -35,13 +37,17 @@ impl Fixture {
         let url = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(Mutex::new(Vec::new()));
         let revision = Arc::new(AtomicUsize::new(1));
+        let dimensions = Arc::new(AtomicUsize::new(3));
+        let unload_response = Arc::new(Mutex::new(None::<Value>));
         let fail_embedding = Arc::new(AtomicBool::new(false));
         let unavailable = Arc::new(AtomicBool::new(false));
         let loaded = Arc::new(AtomicBool::new(true));
-        let (root_url, reqs, rev, fail, unavail, is_loaded) = (
+        let (root_url, reqs, rev, dims, unload, fail, unavail, is_loaded) = (
             url.clone(),
             requests.clone(),
             revision.clone(),
+            dimensions.clone(),
+            unload_response.clone(),
             fail_embedding.clone(),
             unavailable.clone(),
             loaded.clone(),
@@ -49,10 +55,12 @@ impl Fixture {
         let task = tokio::spawn(async move {
             loop {
                 let (mut socket, _) = listener.accept().await.unwrap();
-                let (url, reqs, rev, fail, unavail, is_loaded) = (
+                let (url, reqs, rev, dims, unload, fail, unavail, is_loaded) = (
                     root_url.clone(),
                     reqs.clone(),
                     rev.clone(),
+                    dims.clone(),
+                    unload.clone(),
                     fail.clone(),
                     unavail.clone(),
                     is_loaded.clone(),
@@ -128,6 +136,9 @@ impl Fixture {
                                 is_loaded.store(true, Ordering::SeqCst);
                                 json!({"success":true,"loaded":true})
                             }
+                            "unserve_model" if unload.lock().is_some() => {
+                                unload.lock().as_ref().unwrap().clone()
+                            }
                             "unserve_model" => {
                                 is_loaded.store(false, Ordering::SeqCst);
                                 json!({"success":true,"unloaded":true})
@@ -141,7 +152,10 @@ impl Fixture {
                             if fail.load(Ordering::SeqCst) {
                                 json!({"contract_version":1,"request_id":body["request_id"],"error":{"code":"provider_failure","outcome":"not_admitted"}})
                             } else {
-                                json!({"contract_version":1,"request_id":body["request_id"],"result":{"kind":"embeddings","vectors":[[1.,2.,3.]]}})
+                                let vector = (1..=dims.load(Ordering::SeqCst))
+                                    .map(|v| v as f32)
+                                    .collect::<Vec<_>>();
+                                json!({"contract_version":1,"request_id":body["request_id"],"result":{"kind":"embeddings","vectors":[vector]}})
                             }
                         } else {
                             let events = [
@@ -176,13 +190,15 @@ impl Fixture {
             url,
             requests,
             revision,
+            dimensions,
+            unload_response,
             fail_embedding,
             unavailable,
             loaded,
             task,
         }
     }
-    fn embedding_config(&self) -> EmbeddingConfig {
+    pub(crate) fn embedding_config(&self) -> EmbeddingConfig {
         EmbeddingConfig {
             provider: EmbeddingProvider::Pumas,
             base_url: self.url.clone(),
@@ -190,6 +206,11 @@ impl Fixture {
             profile: "fixture".into(),
             ..Default::default()
         }
+    }
+
+    pub(crate) fn change_embedding_representation(&self, revision: usize, dimensions: usize) {
+        self.revision.store(revision, Ordering::SeqCst);
+        self.dimensions.store(dimensions, Ordering::SeqCst);
     }
 }
 pub(crate) fn description(url: &str) -> Value {
@@ -256,7 +277,7 @@ async fn pumas_real_wire_path_load_embed_revision_change_unload_and_errors() {
     assert!(EmbeddingClient::from_config(&config).await.is_ok());
 }
 
-async fn ready(state: &AppState) {
+pub(crate) async fn ready(state: &AppState) {
     tokio::time::timeout(Duration::from_secs(10), async {
         loop {
             let status = crate::reference_service::index_status(state).unwrap();
@@ -271,6 +292,54 @@ async fn ready(state: &AppState) {
     })
     .await
     .unwrap();
+}
+
+#[tokio::test]
+async fn unload_rejects_typed_provider_failures_even_when_rpc_success_is_true() {
+    let fixture = Fixture::start().await;
+    for error in [
+        "ONNX Runtime could not unload the selected model",
+        "Ollama could not unload the selected model",
+    ] {
+        *fixture.unload_response.lock() = Some(json!({
+            "success": true, "error": error, "unloaded": false
+        }));
+        let request = serde_json::from_value(json!({
+            "model_id": "embed", "provider": "onnx_runtime", "profile_id": "fixture"
+        }))
+        .unwrap();
+        let failure = unload_model(&fixture.url, request).await.unwrap_err();
+        assert!(failure.contains(error), "{failure}");
+        assert!(fixture.loaded.load(Ordering::SeqCst));
+        assert!(
+            EmbeddingClient::from_config(&fixture.embedding_config())
+                .await
+                .is_ok()
+        );
+    }
+}
+
+#[tokio::test]
+async fn unload_preserves_already_unserved_outcome_and_rejects_missing_receipt() {
+    let fixture = Fixture::start().await;
+    fixture.loaded.store(false, Ordering::SeqCst);
+    let request = || {
+        serde_json::from_value(json!({
+            "model_id": "embed", "provider": "onnx_runtime", "profile_id": "fixture"
+        }))
+        .unwrap()
+    };
+    *fixture.unload_response.lock() = Some(json!({"success": true, "unloaded": false}));
+    let response = unload_model(&fixture.url, request()).await.unwrap();
+    assert!(!response.unloaded);
+    assert!(response.error.is_none());
+    *fixture.unload_response.lock() = Some(json!({"success": true}));
+    assert!(
+        unload_model(&fixture.url, request())
+            .await
+            .unwrap_err()
+            .contains("unloaded")
+    );
 }
 
 #[tokio::test]

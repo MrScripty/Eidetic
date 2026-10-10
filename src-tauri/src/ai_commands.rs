@@ -82,7 +82,7 @@ pub async fn pumas_load_model(
 pub async fn pumas_unload_model(
     endpoint: String,
     request: eidetic_server::pumas_inference::UnserveModelRequest,
-) -> Result<serde_json::Value, CommandError> {
+) -> Result<eidetic_server::pumas_inference::UnserveModelResponse, CommandError> {
     eidetic_server::pumas_inference::unload_model(&endpoint, request)
         .await
         .map_err(|e| CommandError::from(eidetic_server::backend_error::BackendError::internal(e)))

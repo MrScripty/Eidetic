@@ -53,6 +53,8 @@ A borrowed Pumas service receives no implicit unload/shutdown. Explicit bootstra
 failures appear in AI status and keep Pumas selected; they do not revert to a
 direct llama.cpp endpoint. **Unload** is an
 explicit operator action on the selected model/profile, including borrowed models.
+Provider unload errors remain failures even if Pumas reports RPC `success: true`;
+an error-free `unloaded: false` is displayed as already not served.
 For non-Linux systems start Pumas separately and borrow its endpoint.
 
 Existing direct llama.cpp and OpenRouter chat remain supported. An independently
@@ -106,6 +108,8 @@ upstream revision if available), plus matching vector dimensions. All chunks of 
 document publish together after successful embedding. Deleted sources, project
 replacement and embedding-selection changes invalidate outstanding tickets.
 Generation rechecks scope/config and current source at attachment.
+The captured scope is checked before changing index compatibility/status, so a
+late query from an earlier index cannot mark a rebuilt reference stale.
 
 Pumas typed v1 returns vectors but no immutable package-weight revision in each
 operation response. Eidetic observes provenance/load identity before and after

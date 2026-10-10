@@ -112,3 +112,7 @@ window shutdown. Borrowed services receive no implicit unload/shutdown request.
 Window destruction observes backend/Pumas shutdown with `block_on` before exit
 can tear down the async runtime. A spawned fire-and-forget drain is insufficient
 for an owned Pumas child; the exact child exit receipt must remain awaited.
+
+`pumas_unload_model` returns the actual typed `UnserveModelResponse` after backend
+failure checks; the frontend preserves `unloaded: false` as already unserved
+rather than claiming the runtime performed an unload.

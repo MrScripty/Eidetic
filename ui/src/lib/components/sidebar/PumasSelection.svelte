@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getPumasCatalog, loadPumasModel, unloadPumasModel } from '$lib/api.js';
   import type { PumasCatalog } from '$lib/aiTypes.js';
+  import { pumasUnloadMessage } from './pumasLifecycle.js';
 
   let {
     endpoint,
@@ -41,11 +42,11 @@
           selectedProfile.provider,
           selectedProfile.device.mode,
         );
+        message = 'Model loaded through Pumas';
       } else {
-        await unloadPumasModel(endpoint, model, profile, selectedProfile.provider);
+        const result = await unloadPumasModel(endpoint, model, profile, selectedProfile.provider);
+        message = pumasUnloadMessage(result);
       }
-      message =
-        action === 'load' ? 'Model loaded through Pumas' : 'Selected model unloaded through Pumas';
     } catch (error) {
       message = String(error);
     } finally {

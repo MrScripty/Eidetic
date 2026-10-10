@@ -3,6 +3,7 @@ import type {
   AiStatus,
   ModelListResponse,
   PumasCatalog,
+  PumasUnserveResult,
   ReferenceIndexStatus,
 } from './aiTypes.js';
 import type { ChildPlan } from './childPlanningTypes.js';
@@ -175,8 +176,8 @@ export function unloadPumasModel(
   model: string,
   profile: string,
   provider: string,
-): Promise<unknown> {
-  return invokeDesktop('pumas_unload_model', {
+): Promise<PumasUnserveResult> {
+  return invokeDesktop<PumasUnserveResult>('pumas_unload_model', {
     endpoint,
     request: { model_id: model, profile_id: profile, provider },
   });

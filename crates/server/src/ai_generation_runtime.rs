@@ -215,6 +215,9 @@ fn attach_rag_embedding(
         return;
     }
     let mut store = state.vector_store.lock();
+    if scope != store.scope() {
+        return;
+    }
     store.mark_incompatible(query_embedding);
     request.rag_context = store
         .search(

@@ -8,6 +8,7 @@ This directory contains the right-hand control surfaces for arcs, change review,
 |-------------|-------------|
 | `AiConfigPanel.svelte` | AI backend configuration controls with separate reference embedding selection. |
 | `PumasSelection.svelte` | Installed Pumas model/profile selectors and explicit Load/Unload controls. |
+| `pumasLifecycle.ts` / `pumasLifecycle.test.ts` | Typed unload outcome messages and exact ONNX/Ollama failure, already-unserved and completed-unload regressions. |
 | `EmbeddingConfigPanel.svelte` | Independent disabled/Pumas/OpenAI-compatible embedding selection and authentication. |
 | `ArcList.svelte` / `ArcDetail.svelte` | Story-arc browsing and editing. |
 | `ChangeReviewPanel.svelte` / `changeReviewPanel.css` | Projection-backed change history review surface for accepted backend events and revision deltas. |
@@ -66,3 +67,7 @@ model/load revision. Reindex rebuilds saved source text. Provider/model selectio
 changes schedule a rebuild when configuration is saved. Generation notifications
 name consumed reference sources or display the retrieval error; the existing
 context viewer includes the exact retrieved text actually sent to the model.
+
+Unload reports completion only for `unloaded: true` without a provider error.
+An already-unserved result is shown separately; `success: true` cannot override
+an ONNX/Ollama unload error or become a successful unload message.

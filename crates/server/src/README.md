@@ -306,6 +306,10 @@ increase coupling by hiding the transaction invariant.
   queued retrieval. Create/load publish path, project and index under the project
   guard. Source checks happen again before
   ranking under project-then-index lock order. No lock crosses model I/O.
+  Retrieval verifies the captured index scope under that same guard before any
+  compatibility/status mutation; a late query cannot mark a newer reindexed or
+  same-path reopened document stale. Regression checks assert the complete fresh
+  status remains unchanged and its current query still retrieves the source.
 - Only nonempty finite nonzero vectors with matching configured endpoint/model
   and dimension are ranked. Returned HTTP model identity must match the request.
   Pumas embeddings now bind producer instance/service generation, provider,
@@ -724,3 +728,9 @@ Explicit selected-root bootstrap failures preserve Pumas as the selected backend
 and expose the actual startup error in AI status. They never silently revert to
 a direct llama.cpp endpoint; an operator can supply a valid explicit Pumas URL
 to retry connection through the existing configuration control.
+
+Unload decodes Pumas's actual `UnserveModelResponse`: an `error` is failure even
+when `success` is true; `unloaded: false` without an error is an already-unserved
+outcome rather than a successful unload receipt. Missing required receipt fields
+are rejected. HTTP fixtures retain the loaded model after ONNX/Ollama-shaped
+unload failures and verify the actual provider diagnostic reaches the caller.

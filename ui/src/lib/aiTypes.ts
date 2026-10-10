@@ -59,3 +59,9 @@ export interface PumasCatalog {
     snapshot: { profiles: { profile_id: string; provider: string; device: { mode: string } }[] };
   };
 }
+
+export interface PumasUnserveResult {
+  success: boolean;
+  error?: string | null;
+  unloaded: boolean;
+}

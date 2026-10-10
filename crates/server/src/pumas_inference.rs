@@ -5,7 +5,7 @@ use pumas_library::discovery::{
     HTTP_DISCOVERY_PATH, HTTP_INSTANCE_GENERATION_HEADER, HTTP_SERVICE_GENERATION_HEADER,
     HttpServiceDescription, LoopbackHttpEndpoint,
 };
-pub use pumas_library::models::{ServeModelRequest, UnserveModelRequest};
+pub use pumas_library::models::{ServeModelRequest, UnserveModelRequest, UnserveModelResponse};
 use pumas_library::models::{ServedModelLoadState, ServedModelStatus, ServingStatusResponse};
 use reqwest::{Client, RequestBuilder};
 use serde_json::{Value, json};
@@ -296,11 +296,25 @@ pub async fn load_model(endpoint: &str, request: ServeModelRequest) -> Result<Va
     let client = PumasClient::connect(endpoint).await?;
     client.rpc("serve_model", json!({"request":request})).await
 }
-pub async fn unload_model(endpoint: &str, request: UnserveModelRequest) -> Result<Value, String> {
+pub async fn unload_model(
+    endpoint: &str,
+    request: UnserveModelRequest,
+) -> Result<UnserveModelResponse, String> {
     let client = PumasClient::connect(endpoint).await?;
-    client
+    let result = client
         .rpc("unserve_model", json!({"request":request}))
-        .await
+        .await?;
+    let response: UnserveModelResponse =
+        serde_json::from_value(result).map_err(|e| format!("Pumas unload response: {e}"))?;
+    if !response.success || response.error.is_some() {
+        return Err(format!(
+            "Pumas unserve_model: {}",
+            response.error.as_deref().unwrap_or("unload failed")
+        ));
+    }
+    // `unloaded: false` with no error means already unserved, not an unload
+    // receipt. Preserve the typed distinction for the operator interface.
+    Ok(response)
 }
 
 pub async fn catalog(endpoint: &str) -> Result<Value, String> {

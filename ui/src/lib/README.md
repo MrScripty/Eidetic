@@ -199,3 +199,6 @@ and saved-reference Reindex/status. Pumas serving requests preserve the selected
 provider/profile/device scope; no provider process lifecycle lives in the renderer.
 `serverEventTypes.ts` includes `reference_retrieval` source names or an error for
 the actual generation attachment, separate from upload acknowledgement.
+Pumas unload transport exposes the typed success/error/unloaded outcome so the
+operator surface can distinguish an unload receipt from an already-unserved
+model; provider errors remain rejected desktop commands.
