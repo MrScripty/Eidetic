@@ -1,4 +1,10 @@
-import type { AiConfig, AiStatus, ModelListResponse } from './aiTypes.js';
+import type {
+  AiConfig,
+  AiStatus,
+  ModelListResponse,
+  PumasCatalog,
+  ReferenceIndexStatus,
+} from './aiTypes.js';
 import type { ChildPlan } from './childPlanningTypes.js';
 import { invokeDesktop } from './desktopTransport.js';
 import type { Project, ReferenceDocument, ReferenceType } from './projectTypes.js';
@@ -135,4 +141,43 @@ export function loadProject(path: string): Promise<Project> {
 
 export function listProjects(): Promise<{ name: string; path: string; modified: string }[]> {
   return invokeDesktop<{ name: string; path: string; modified: string }[]>('project_list');
+}
+
+export function getAiConfig(): Promise<AiConfig> {
+  return invokeDesktop<AiConfig>('ai_config_get');
+}
+export function getReferenceIndexStatus(): Promise<ReferenceIndexStatus> {
+  return invokeDesktop<ReferenceIndexStatus>('reference_index_status');
+}
+export function reindexReferences(): Promise<void> {
+  return invokeDesktop<void>('reference_reindex');
+}
+export function getPumasCatalog(endpoint: string): Promise<PumasCatalog> {
+  return invokeDesktop<PumasCatalog>('pumas_catalog', { endpoint });
+}
+export function loadPumasModel(
+  endpoint: string,
+  model: string,
+  profile: string,
+  provider: string,
+  deviceMode: string,
+): Promise<unknown> {
+  return invokeDesktop('pumas_load_model', {
+    endpoint,
+    request: {
+      model_id: model,
+      config: { profile_id: profile, provider, device_mode: deviceMode, keep_loaded: true },
+    },
+  });
+}
+export function unloadPumasModel(
+  endpoint: string,
+  model: string,
+  profile: string,
+  provider: string,
+): Promise<unknown> {
+  return invokeDesktop('pumas_unload_model', {
+    endpoint,
+    request: { model_id: model, profile_id: profile, provider },
+  });
 }

@@ -1,9 +1,12 @@
 <script lang="ts">
+  import PumasSelection from './PumasSelection.svelte';
+  import EmbeddingConfigPanel from './EmbeddingConfigPanel.svelte';
   import type { AiConfig, BackendType } from '$lib/aiTypes.js';
-  import { updateAiConfig } from '$lib/api.js';
+  import { getAiConfig, updateAiConfig } from '$lib/api.js';
   import { aiStatusState, refreshAiStatus } from '$lib/stores/aiStatus.svelte.js';
 
   const BACKEND_BASE_URLS: Record<BackendType, string> = {
+    pumas: 'http://127.0.0.1:8080',
     llama_cpp: 'http://127.0.0.1:18080/v1',
     open_router: 'https://openrouter.ai/api/v1',
   };
@@ -19,7 +22,7 @@
 
   let saving = $state(false);
   let statusMessage = $state('');
-  let isLocalBackend = $derived(config.backend_type === 'llama_cpp');
+  let isLocalBackend = $derived(config.backend_type !== 'open_router');
 
   async function checkStatus() {
     await refreshAiStatus();
@@ -33,8 +36,8 @@
       await updateAiConfig(config);
       await checkStatus();
       statusMessage = aiStatusState.status?.connected ? 'Connected' : 'Connection failed';
-    } catch {
-      statusMessage = 'Failed to save config';
+    } catch (error) {
+      statusMessage = String(error);
     }
 
     saving = false;
@@ -56,8 +59,15 @@
     return 'auto (detect available model)';
   }
 
-  // Check status on mount.
+  // Restore active backend configuration when the panel is reopened.
   $effect(() => {
+    void getAiConfig()
+      .then((active) => {
+        config = active;
+      })
+      .catch((error) => {
+        statusMessage = String(error);
+      });
     void checkStatus();
   });
 </script>
@@ -83,19 +93,22 @@
   <label class="field">
     <span class="field-label">Backend</span>
     <select value={config.backend_type} onchange={handleBackendChange}>
+      <option value="pumas">Pumas (Local managed inference)</option>
       <option value="llama_cpp">llama.cpp (Local)</option>
       <option value="open_router">OpenRouter (Cloud)</option>
     </select>
   </label>
 
-  <label class="field">
-    <span class="field-label">Model</span>
-    <input
-      type="text"
-      bind:value={config.model}
-      placeholder={modelPlaceholder(config.backend_type)}
-    />
-  </label>
+  {#if config.backend_type !== 'pumas'}
+    <label class="field">
+      <span class="field-label">Model</span>
+      <input
+        type="text"
+        bind:value={config.model}
+        placeholder={modelPlaceholder(config.backend_type)}
+      />
+    </label>
+  {/if}
 
   {#if isLocalBackend}
     <label class="field">
@@ -112,6 +125,16 @@
       <input type="password" bind:value={config.api_key} placeholder="sk-or-..." />
     </label>
   {/if}
+
+  {#if config.backend_type === 'pumas'}
+    <PumasSelection
+      endpoint={config.base_url}
+      bind:model={config.model}
+      bind:profile={config.pumas_profile}
+    />
+  {/if}
+
+  <EmbeddingConfigPanel bind:embedding={config.embedding} />
 
   <label class="field">
     <span class="field-label"

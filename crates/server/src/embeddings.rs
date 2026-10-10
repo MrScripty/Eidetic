@@ -1,12 +1,38 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-/// Configured representation space. This does not attest immutable model weights;
-/// Pumas package/revision identity must replace it before that stronger guarantee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum EmbeddingProvider {
+    #[default]
+    Disabled,
+    Pumas,
+    OpenAiCompatible,
+}
+
+/// Embeddings have their own endpoint, model, profile, revision and credentials.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct EmbeddingConfig {
+    pub provider: EmbeddingProvider,
+    pub base_url: String,
+    pub model: String,
+    pub profile: String,
+    /// Required operator revision for a non-Pumas endpoint. Pumas resolves its
+    /// current model provenance/load revision directly from the producer.
+    pub revision: String,
+    pub api_key: Option<String>,
+}
+
+/// Exact selected representation and producer load revision. Dimensions are
+/// validated on each vector and must also match at retrieval.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct EmbeddingIdentity {
+    provider: EmbeddingProvider,
     endpoint: String,
     model: String,
+    profile: String,
+    revision: String,
 }
 
 /// A non-empty, finite, non-zero vector with its configured provider/model identity.
@@ -17,6 +43,30 @@ pub(crate) struct Embedding {
 }
 
 impl Embedding {
+    pub(crate) fn model(&self) -> &str {
+        &self.identity.model
+    }
+    pub(crate) fn revision_label(&self) -> String {
+        match serde_json::from_str::<serde_json::Value>(&self.identity.revision) {
+            Ok(value) => format!(
+                "{} / {}",
+                value["metadata"]["effective_metadata"]["upstream_revision"]
+                    .as_str()
+                    .unwrap_or("local package metadata"),
+                value["loaded_at"].as_str().unwrap_or("unknown load")
+            ),
+            Err(_) => self.identity.revision.clone(),
+        }
+    }
+    pub(crate) fn matches_config(&self, config: &EmbeddingConfig) -> bool {
+        self.identity.provider == config.provider
+            && config.provider != EmbeddingProvider::Disabled
+            && self.identity.endpoint == config.base_url.trim_end_matches('/')
+            && self.identity.model == config.model
+            && self.identity.profile == config.profile
+            && (config.provider == EmbeddingProvider::Pumas
+                || self.identity.revision == config.revision)
+    }
     pub(crate) fn new(identity: EmbeddingIdentity, values: Vec<f32>) -> Result<Self, String> {
         if values.is_empty() || values.iter().any(|value| !value.is_finite()) {
             return Err("embedding must be non-empty and finite".into());
@@ -28,10 +78,12 @@ impl Embedding {
     }
 }
 
-/// Transitional OpenAI-compatible adapter. Pumas runtime integration is separate.
+/// Real Pumas typed operations or an independently configured HTTP provider.
 pub struct EmbeddingClient {
     client: Client,
     identity: EmbeddingIdentity,
+    config: EmbeddingConfig,
+    pumas: Option<crate::pumas_inference::PumasClient>,
 }
 
 #[derive(Serialize)]
@@ -53,30 +105,102 @@ struct EmbedResponseData {
 }
 
 impl EmbeddingClient {
+    #[cfg(test)]
     pub fn new(base_url: impl Into<String>, model: impl Into<String>) -> Self {
         Self {
             client: Client::new(),
             identity: EmbeddingIdentity {
+                provider: EmbeddingProvider::OpenAiCompatible,
                 endpoint: base_url.into().trim_end_matches('/').to_string(),
                 model: model.into(),
+                profile: String::new(),
+                revision: "fixture".into(),
             },
+            config: EmbeddingConfig::default(),
+            pumas: None,
         }
     }
 
+    pub(crate) async fn from_config(config: &EmbeddingConfig) -> Result<Self, String> {
+        if config.provider == EmbeddingProvider::Disabled {
+            return Err(
+                "Reference embeddings are disabled; select an embedding provider/model".into(),
+            );
+        }
+        if config.model.trim().is_empty() {
+            return Err("Choose an embedding model".into());
+        }
+        let pumas = if config.provider == EmbeddingProvider::Pumas {
+            Some(crate::pumas_inference::PumasClient::connect(&config.base_url).await?)
+        } else {
+            None
+        };
+        let revision = if let Some(client) = &pumas {
+            client
+                .embedding_revision(&config.model, &config.profile)
+                .await?
+        } else {
+            if config.revision.trim().is_empty() {
+                return Err("Configure an embedding model revision before indexing".into());
+            }
+            config.revision.clone()
+        };
+        Ok(Self {
+            client: Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .timeout(std::time::Duration::from_secs(180))
+                .build()
+                .map_err(|e| e.to_string())?,
+            identity: EmbeddingIdentity {
+                provider: config.provider,
+                endpoint: config.base_url.trim_end_matches('/').to_owned(),
+                model: config.model.clone(),
+                profile: config.profile.clone(),
+                revision,
+            },
+            config: config.clone(),
+            pumas,
+        })
+    }
+
+    #[cfg(test)]
     pub(crate) fn identity(&self) -> EmbeddingIdentity {
         self.identity.clone()
     }
 
     pub(crate) async fn embed(&self, text: &str) -> Result<Embedding, String> {
+        if let Some(client) = &self.pumas {
+            let before = client
+                .embedding_revision(&self.identity.model, &self.identity.profile)
+                .await?;
+            if before != self.identity.revision {
+                return Err("Pumas embedding model revision changed; reindex references".into());
+            }
+            let values = client
+                .embed(&self.identity.model, &self.identity.profile, text)
+                .await?;
+            if client
+                .embedding_revision(&self.identity.model, &self.identity.profile)
+                .await?
+                != before
+            {
+                return Err(
+                    "Pumas embedding model changed during inference; reindex references".into(),
+                );
+            }
+            return Embedding::new(self.identity.clone(), values);
+        }
         let url = format!("{}/embeddings", self.identity.endpoint);
         let body = EmbedRequest {
             model: &self.identity.model,
             input: text,
         };
-        let resp = self
-            .client
-            .post(&url)
-            .json(&body)
+        let request = self.client.post(&url).json(&body);
+        let request = match self.config.api_key.as_deref().filter(|key| !key.is_empty()) {
+            Some(key) => request.bearer_auth(key),
+            None => request,
+        };
+        let resp = request
             .send()
             .await
             .map_err(|e| format!("embedding request failed: {e}"))?;

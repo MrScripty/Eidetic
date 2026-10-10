@@ -1,4 +1,4 @@
-export type BackendType = 'llama_cpp' | 'open_router';
+export type BackendType = 'llama_cpp' | 'pumas' | 'open_router';
 
 export interface AiConfig {
   backend_type: BackendType;
@@ -7,6 +7,8 @@ export interface AiConfig {
   max_tokens: number;
   base_url: string;
   api_key: string | null;
+  pumas_profile?: string;
+  embedding?: EmbeddingConfig;
 }
 
 export interface AiStatus {
@@ -29,4 +31,31 @@ export interface ModelEntry {
 export interface ModelListResponse {
   models: ModelEntry[];
   total_count: number;
+}
+
+export interface EmbeddingConfig {
+  provider: 'disabled' | 'pumas' | 'open_ai_compatible';
+  base_url: string;
+  model: string;
+  profile: string;
+  revision: string;
+  api_key: string | null;
+}
+export interface ReferenceIndexStatus {
+  documents: {
+    document_id: string;
+    name: string;
+    state: string;
+    indexed_chunks: number;
+    dimensions: number | null;
+    model: string | null;
+    revision: string | null;
+    error: string | null;
+  }[];
+}
+export interface PumasCatalog {
+  models: { models: { id: string; official_name: string; model_type: string }[] };
+  profiles: {
+    snapshot: { profiles: { profile_id: string; provider: string; device: { mode: string } }[] };
+  };
 }

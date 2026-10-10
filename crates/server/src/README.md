@@ -63,8 +63,11 @@ domain model in `eidetic-core`.
 | `agent_workflow_harness_tests.rs` | Provider, manifest, executor, cancellation and exact-budget lifecycle regressions against SQLite history. |
 | `agent_premise_workflow.rs` | First premise graph-context workflow slice over backend graph reads, reviewable proposals, and harness history. |
 | `export_service.rs` | Host-neutral PDF export behavior consumed by Tauri commands. |
-| `reference_service.rs` | Canonical reference list/upload/delete and source-bound asynchronous embedding publication. |
-| `embeddings.rs` | Transitional HTTP embedding adapter validating returned model, input index and finite nonzero vectors. |
+| `reference_service.rs` | Canonical reference list/upload/delete, explicit index status/reindex and all-or-nothing source-bound embedding publication; reopen rebuilds disposable index state. |
+| `embeddings.rs` | Independently configured real Pumas typed embeddings and authenticated OpenAI-compatible embedding adapter, binding provider/model/profile/load revision and finite nonzero vectors. |
+| `pumas_inference.rs` | Fenced Pumas discovery, typed operation v1/capability reads, model metadata revision and explicit serving lifecycle RPC consumer. |
+| `pumas_inference_tests.rs` | Controlled HTTP fixtures proving load/use/unload, reference upload/reopen/model-revision refusal, visible errors and retrieved prompt contributions; no real-model inference claim. |
+| `pumas_runtime.rs` | Optional selected-root Pumas control-plane bootstrap with cancellation-safe owning handoff and generation-fenced owned shutdown; borrowed owners are never stopped. |
 | `vector_store.rs` | Disposable exact-source index with publication tickets, representation-space filtering and stable ranking. |
 | `vector_store_tests.rs` | Source custody, stale lifecycle, incompatible representation and numeric ranking regressions. |
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
@@ -305,8 +308,13 @@ increase coupling by hiding the transaction invariant.
   ranking under project-then-index lock order. No lock crosses model I/O.
 - Only nonempty finite nonzero vectors with matching configured endpoint/model
   and dimension are ranked. Returned HTTP model identity must match the request.
-  This does not attest immutable model weights; Pumas revision-aware embeddings,
-  live runtime qualification and saved-reference re-indexing remain M3 work.
+  Pumas embeddings now bind producer instance/service generation, provider,
+  selected profile/model, load timestamp and actual library metadata, including
+  upstream revision when present. Dimension mismatch excludes candidates.
+  This is session/provenance identity, not an immutable weight attestation;
+  out-of-band file mutation without metadata/reload is outside the producer's
+  current contract. Saved sources rebuild on reopen; failed/stale/indexing states
+  are projected by `reference_index_status`. See `docs/pumas-local-inference.md`.
 - Generation and preview accept an optional explicit fictional `story_time_ms`.
   Snapshot fields resolve independently at or before it. Conflicting values at
   the latest effective timestamp stop context construction. A cleared value is
@@ -696,3 +704,14 @@ UserEdit history and rejects stale/ABA reads under the shared timeline writer gu
 recap titles actually supplied before provider I/O. Existing graph edges and
 proposal bindings support exact impact, stale/ABA refusal, historical/current or
 owned-deletion evidence, and explicit acceptance with refreshed consumed lineage.
+
+Local inference uses the existing configuration facade plus `ai_config_get`,
+`pumas_catalog`, `pumas_load_model`, `pumas_unload_model`,
+`reference_index_status` and `reference_reindex` desktop commands. Chat Pumas
+selection requires explicit installed model/profile; embedding selection has
+separate provider, endpoint, model/profile and credentials. Typed stream terminal
+failures never publish partial screenplay. Reference retrieval emits source names
+or a visible error before the actual generation context event. Disabled or failed
+retrieval permits ordinary generation with the error displayed; it does not claim
+references contributed. Configuration is application-session state, as before;
+references are canonical saved SQLite project content.

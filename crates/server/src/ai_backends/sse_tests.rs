@@ -9,6 +9,8 @@ fn reader() -> Reader {
         data: Vec::new(),
         completed: false,
         provider: "fixture",
+        pumas_request: None,
+        started: false,
     }
 }
 
@@ -145,4 +147,84 @@ fn a_chunk_is_consumed_incrementally_without_a_token_queue() {
     assert_eq!(reader.lines().unwrap(), Some("second".into()));
     assert!(reader.scan > consumed);
     assert_eq!(reader.lines().unwrap(), None);
+}
+
+#[test]
+fn pumas_typed_stream_checks_order_contract_selection_and_correlation() {
+    let typed = || {
+        let mut reader = reader();
+        reader.pumas_request = Some(("request".into(), "model".into(), "profile".into()));
+        reader
+    };
+    let started = br#"data: {"kind":"started","contract_version":1,"request_id":"request","capability":"chat_generation","model":"model","profile":"profile"}
+
+"#;
+    let delta = br#"data: {"kind":"delta","request_id":"request","text":"hello"}
+
+"#;
+    let completed = br#"data: {"kind":"completed","request_id":"request","finish_reason":"stop"}
+
+"#;
+    let mut reader = typed();
+    assert!(feed(&mut reader, started).unwrap().is_empty());
+    assert_eq!(feed(&mut reader, delta).unwrap(), ["hello"]);
+    assert!(feed(&mut reader, completed).unwrap().is_empty());
+    assert!(reader.completed);
+    assert!(feed(&mut reader, delta).is_err());
+    assert!(feed(&mut typed(), delta).is_err());
+    assert!(feed(&mut typed(), completed).is_err());
+    for replacement in [
+        String::from_utf8_lossy(started)
+            .replace("\"contract_version\":1", "\"contract_version\":2"),
+        String::from_utf8_lossy(started).replace("\"model\":\"model\"", "\"model\":\"other\""),
+        String::from_utf8_lossy(started)
+            .replace("\"profile\":\"profile\"", "\"profile\":\"other\""),
+        String::from_utf8_lossy(started)
+            .replace("\"request_id\":\"request\"", "\"request_id\":\"other\""),
+    ] {
+        assert!(feed(&mut typed(), replacement.as_bytes()).is_err());
+    }
+    let mut reader = typed();
+    feed(&mut reader, started).unwrap();
+    assert!(feed(&mut reader, br#"data: {"kind":"failed","request_id":"request","error":{"code":"transport_lost","outcome":"unknown"}}
+
+"#).unwrap_err().to_string().contains("transport_lost"));
+}
+
+#[tokio::test]
+async fn dropping_pumas_stream_closes_pending_transport_without_fabricating_completion() {
+    use tokio::{
+        io::{AsyncReadExt, AsyncWriteExt},
+        net::TcpListener,
+    };
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let peer = tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = vec![0; 4096];
+        assert!(socket.read(&mut request).await.unwrap() > 0);
+        let body = concat!(
+            "data: {\"kind\":\"started\",\"contract_version\":1,\"request_id\":\"request\",\"capability\":\"chat_generation\",\"model\":\"model\",\"profile\":\"profile\"}\n\n",
+            "data: {\"kind\":\"delta\",\"request_id\":\"request\",\"text\":\"partial\"}\n\n"
+        );
+        // A declared unfinished body keeps the producer connection open.
+        socket.write_all(format!("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\n\r\n{body}",body.len()+100).as_bytes()).await.unwrap();
+        let mut byte = [0];
+        tokio::time::timeout(std::time::Duration::from_secs(5), socket.read(&mut byte))
+            .await
+            .unwrap()
+            .unwrap()
+    });
+    let response = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(url)
+        .send()
+        .await
+        .unwrap();
+    let mut stream = pumas_tokens(response, "request".into(), "model".into(), "profile".into());
+    assert_eq!(stream.next().await.unwrap().unwrap(), "partial");
+    drop(stream);
+    assert_eq!(peer.await.unwrap(), 0);
 }

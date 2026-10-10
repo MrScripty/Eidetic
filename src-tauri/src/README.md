@@ -100,3 +100,11 @@ The Bevy timeline bridge continues submitting legacy range commands with no expe
 The command registry includes `projection_bible_recall` for explicit selected
 Bible entity inspection; screenplay replacement remains behind existing review
 and acceptance commands.
+
+Pumas desktop commands retain backend ownership: `pumas_catalog` projects installed
+model/profile choices, `pumas_load_model` / `pumas_unload_model` consume Pumas's
+actual serving DTOs, and `ai_config_get` returns current independent chat and
+embedding selections. `reference_index_status` and `reference_reindex` expose
+source-bound derived indexing without changing canonical reference storage.
+Owned Pumas bootstrap cleanup runs through `AppState::shutdown_tasks_async` on
+window shutdown. Borrowed services receive no implicit unload/shutdown request.

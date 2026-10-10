@@ -20,6 +20,8 @@ struct Reader {
     data: Vec<u8>,
     completed: bool,
     provider: &'static str,
+    pumas_request: Option<(String, String, String)>,
+    started: bool,
 }
 
 impl Reader {
@@ -43,12 +45,47 @@ impl Reader {
         if self.completed {
             return Err(self.error("received data after completion"));
         }
-        if text.trim() == "[DONE]" {
+        if self.pumas_request.is_none() && text.trim() == "[DONE]" {
             self.completed = true;
             return Ok(None);
         }
         let value: serde_json::Value =
             serde_json::from_str(text).map_err(|error| self.error(error))?;
+        if let Some((id, model, profile)) = &self.pumas_request {
+            if value["request_id"] != *id {
+                return Err(self.error("Pumas stream correlation mismatch"));
+            }
+            match value["kind"].as_str() {
+                Some("started")
+                    if !self.started
+                        && value["contract_version"] == 1
+                        && value["capability"] == "chat_generation"
+                        && value["model"] == *model
+                        && value["profile"] == *profile =>
+                {
+                    self.started = true;
+                    return Ok(None);
+                }
+                Some("delta") if self.started => {
+                    return value["text"]
+                        .as_str()
+                        .map(|text| Some(text.to_owned()))
+                        .ok_or_else(|| self.error("invalid Pumas text delta"));
+                }
+                Some("completed")
+                    if self.started
+                        && matches!(
+                            value["finish_reason"].as_str(),
+                            Some("stop" | "length" | "content_filter")
+                        ) =>
+                {
+                    self.completed = true;
+                    return Ok(None);
+                }
+                Some("failed") => return Err(self.error(&value["error"])),
+                _ => return Err(self.error("invalid Pumas stream sequence")),
+            }
+        }
         if let Some(error) = value.get("error") {
             return Err(self.error(error));
         }
@@ -126,6 +163,23 @@ impl std::fmt::Write for ErrorDetail {
 }
 
 pub(super) fn tokens(response: reqwest::Response, provider: &'static str) -> GenerateStream {
+    stream_tokens(response, provider, None)
+}
+
+pub(super) fn pumas_tokens(
+    response: reqwest::Response,
+    request_id: String,
+    model: String,
+    profile: String,
+) -> GenerateStream {
+    stream_tokens(response, "Pumas", Some((request_id, model, profile)))
+}
+
+fn stream_tokens(
+    response: reqwest::Response,
+    provider: &'static str,
+    pumas_request: Option<(String, String, String)>,
+) -> GenerateStream {
     let reader = Reader {
         body: response
             .bytes_stream()
@@ -137,6 +191,8 @@ pub(super) fn tokens(response: reqwest::Response, provider: &'static str) -> Gen
         data: Vec::new(),
         completed: false,
         provider,
+        pumas_request,
+        started: false,
     };
     Box::pin(stream::try_unfold(reader, |mut reader| async move {
         loop {

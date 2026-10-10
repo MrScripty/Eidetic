@@ -80,9 +80,9 @@ pub fn run() {
                 {
                     let _ = timeline_owner.stop();
                 }
-                let task_supervisor = window.state::<AppState>().task_supervisor.clone();
+                let app_state = window.state::<AppState>().inner().clone();
                 tauri::async_runtime::spawn(async move {
-                    task_supervisor.shutdown_all().await;
+                    app_state.shutdown_tasks_async().await;
                 });
             }
         })
@@ -117,6 +117,12 @@ pub fn run() {
             timeline_renderer_commands::timeline_renderer_status,
             timeline_renderer_commands::timeline_renderer_close,
             reference_commands::reference_list,
+            reference_commands::reference_index_status,
+            reference_commands::reference_reindex,
+            ai_commands::pumas_load_model,
+            ai_commands::pumas_catalog,
+            ai_commands::ai_config_get,
+            ai_commands::pumas_unload_model,
             reference_commands::reference_upload,
             reference_commands::reference_delete,
             commands::object_script_story::command_object_field,

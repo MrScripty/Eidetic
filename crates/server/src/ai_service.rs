@@ -37,6 +37,8 @@ pub struct AiConfigUpdate {
     pub max_tokens: Option<usize>,
     pub base_url: Option<String>,
     pub api_key: Option<Option<String>>,
+    pub pumas_profile: Option<String>,
+    pub embedding: Option<crate::embeddings::EmbeddingConfig>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -120,7 +122,22 @@ pub fn update_ai_config(state: &AppState, update: AiConfigUpdate) -> AiConfig {
     if let Some(api_key) = update.api_key {
         config.api_key = api_key.filter(|value| !value.is_empty());
     }
-    config.clone()
+    if let Some(profile) = update.pumas_profile {
+        config.pumas_profile = profile;
+    }
+    let reindex = update
+        .embedding
+        .as_ref()
+        .is_some_and(|embedding| *embedding != config.embedding);
+    if let Some(embedding) = update.embedding {
+        config.embedding = embedding;
+    }
+    let result = config.clone();
+    drop(config);
+    if reindex {
+        crate::reference_service::schedule_reindex(state);
+    }
+    result
 }
 
 pub(crate) async fn active_sqlite_project(
@@ -355,6 +372,8 @@ mod tests {
                 max_tokens: Some(1024),
                 base_url: Some("https://example.test/v1".to_string()),
                 api_key: Some(Some(String::new())),
+                pumas_profile: None,
+                embedding: None,
             },
         );
 

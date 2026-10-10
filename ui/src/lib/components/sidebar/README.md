@@ -6,7 +6,9 @@ This directory contains the right-hand control surfaces for arcs, change review,
 ## Contents
 | File/Folder | Description |
 |-------------|-------------|
-| `AiConfigPanel.svelte` | AI backend configuration controls. |
+| `AiConfigPanel.svelte` | AI backend configuration controls with separate reference embedding selection. |
+| `PumasSelection.svelte` | Installed Pumas model/profile selectors and explicit Load/Unload controls. |
+| `EmbeddingConfigPanel.svelte` | Independent disabled/Pumas/OpenAI-compatible embedding selection and authentication. |
 | `ArcList.svelte` / `ArcDetail.svelte` | Story-arc browsing and editing. |
 | `ChangeReviewPanel.svelte` / `changeReviewPanel.css` | Projection-backed change history review surface for accepted backend events and revision deltas. |
 | `ReferencePanel.svelte` | Reference document management. |
@@ -55,3 +57,12 @@ Group all sidebar-facing panels here and track the larger configuration/detail p
 - None identified as of 2026-03-08.
 - Reason: sidebar panels edit existing schemas rather than defining them.
 - Revisit trigger: sidebar flows begin emitting reusable saved panel configurations.
+
+The local Pumas selector obtains the producer catalog and runtime profiles through
+the backend. A successful control-plane connection is insufficient for connected
+chat status: the exact model/profile must be loaded and advertise chat capability.
+Reference status shows indexing/ready/stale/failed, chunk count, dimensions and
+model/load revision. Reindex rebuilds saved source text. Provider/model selection
+changes schedule a rebuild when configuration is saved. Generation notifications
+name consumed reference sources or display the retrieval error; the existing
+context viewer includes the exact retrieved text actually sent to the model.

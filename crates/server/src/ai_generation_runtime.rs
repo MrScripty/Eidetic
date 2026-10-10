@@ -151,7 +151,7 @@ async fn finish_generation_stream(
     persist_successful_generation(state, project_path, node_uuid, full_text, inputs).await;
 }
 
-async fn attach_rag_context(
+pub(crate) async fn attach_rag_context(
     state: &AppState,
     config: &crate::state::AiConfig,
     project_path: &std::path::Path,
@@ -159,20 +159,38 @@ async fn attach_rag_context(
     request: &mut GenerateRequest,
 ) {
     request.rag_context.clear();
-    {
-        let store = state.vector_store.lock();
-        if scope != store.scope() || store.is_empty() {
-            return;
-        }
+    if scope != state.vector_store.lock().scope() {
+        return;
     }
-    let embed_client =
-        EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
-    match embed_client.embed(&request.target_node.content.notes).await {
-        Ok(query_embedding) => {
-            attach_rag_embedding(state, project_path, scope, &query_embedding, request)
-        }
-        Err(_) => tracing::warn!("Reference retrieval unavailable: query embedding failed"),
+    let has_references = state
+        .project
+        .lock()
+        .as_ref()
+        .is_some_and(|project| !project.references.is_empty());
+    if !has_references {
+        return;
     }
+    let result = async {
+        if state.vector_store.lock().is_empty() {return Err("References are not indexed; check reference index status and Reindex".to_owned());}
+        let embed_client = EmbeddingClient::from_config(&config.embedding).await?;
+        let query_embedding = embed_client.embed(&request.target_node.content.notes).await?;
+        attach_rag_embedding(state, project_path, scope, &query_embedding, request);
+        if request.rag_context.is_empty() {return Err("Reference index is stale or incompatible with the current embedding model revision/dimensions; Reindex".to_owned());}
+        Ok(())
+    }.await;
+    let error = result.err();
+    if let Some(error) = &error {
+        tracing::warn!(%error, "Reference retrieval unavailable");
+    }
+    let _ = state.events_tx.send(ServerEvent::ReferenceRetrieval {
+        node_id: request.target_node.id.0,
+        sources: request
+            .rag_context
+            .iter()
+            .map(|chunk| chunk.source.clone())
+            .collect(),
+        error,
+    });
 }
 
 /// Final publication boundary after external model I/O. The request carries the
@@ -186,9 +204,7 @@ fn attach_rag_embedding(
 ) {
     request.rag_context.clear();
     let config = state.ai_config.lock().clone();
-    let current_client =
-        EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
-    if query_embedding.identity != current_client.identity() {
+    if !query_embedding.matches_config(&config.embedding) {
         return;
     }
     let guard = state.project.lock();
@@ -198,7 +214,8 @@ fn attach_rag_embedding(
     if state.project_database.active_path().as_deref() != Some(project_path) {
         return;
     }
-    let store = state.vector_store.lock();
+    let mut store = state.vector_store.lock();
+    store.mark_incompatible(query_embedding);
     request.rag_context = store
         .search(
             scope,

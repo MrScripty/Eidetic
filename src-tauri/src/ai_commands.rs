@@ -67,3 +67,35 @@ pub async fn ai_generate_batch(
         .await
         .map_err(CommandError::from)
 }
+
+#[tauri::command]
+pub async fn pumas_load_model(
+    endpoint: String,
+    request: eidetic_server::pumas_inference::ServeModelRequest,
+) -> Result<serde_json::Value, CommandError> {
+    eidetic_server::pumas_inference::load_model(&endpoint, request)
+        .await
+        .map_err(|e| CommandError::from(eidetic_server::backend_error::BackendError::internal(e)))
+}
+
+#[tauri::command]
+pub async fn pumas_unload_model(
+    endpoint: String,
+    request: eidetic_server::pumas_inference::UnserveModelRequest,
+) -> Result<serde_json::Value, CommandError> {
+    eidetic_server::pumas_inference::unload_model(&endpoint, request)
+        .await
+        .map_err(|e| CommandError::from(eidetic_server::backend_error::BackendError::internal(e)))
+}
+
+#[tauri::command]
+pub async fn pumas_catalog(endpoint: String) -> Result<serde_json::Value, CommandError> {
+    eidetic_server::pumas_inference::catalog(&endpoint)
+        .await
+        .map_err(|e| CommandError::from(eidetic_server::backend_error::BackendError::internal(e)))
+}
+
+#[tauri::command]
+pub fn ai_config_get(app: tauri::AppHandle) -> AiConfig {
+    app.state::<AppState>().ai_config.lock().clone()
+}

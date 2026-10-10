@@ -29,3 +29,19 @@ pub fn reference_delete(
     let state = app.state::<AppState>();
     reference_service::delete_reference(&state, id).map_err(CommandError::from)
 }
+
+#[tauri::command]
+pub fn reference_index_status(
+    app: tauri::AppHandle,
+) -> Result<reference_service::ReferenceIndexStatus, CommandError> {
+    let state = app.state::<AppState>();
+    reference_service::index_status(&state).map_err(CommandError::from)
+}
+
+#[tauri::command]
+pub fn reference_reindex(app: tauri::AppHandle) -> Result<(), CommandError> {
+    let state = app.state::<AppState>();
+    reference_service::list_references(&state).map_err(CommandError::from)?;
+    reference_service::schedule_reindex(&state);
+    Ok(())
+}

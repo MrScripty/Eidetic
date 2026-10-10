@@ -1,7 +1,7 @@
 use super::{attach_rag_context, attach_rag_embedding};
 use crate::embeddings::{Embedding, EmbeddingClient};
 use crate::project_service::replace_active_project;
-use crate::state::{AppState, constants};
+use crate::state::AppState;
 use eidetic_core::ai::backend::{GenerateRequest, RagChunk};
 use eidetic_core::ai::prompt::build_generate_request;
 use eidetic_core::reference::{ReferenceDocument, ReferenceType, chunk_document};
@@ -11,8 +11,7 @@ use std::sync::Arc;
 
 fn query(state: &AppState) -> Embedding {
     Embedding::new(
-        EmbeddingClient::new(&state.ai_config.lock().base_url, constants::EMBEDDING_MODEL)
-            .identity(),
+        EmbeddingClient::new(&state.ai_config.lock().embedding.base_url, "model").identity(),
         vec![1.0],
     )
     .unwrap()
@@ -44,6 +43,13 @@ fn request_with_old_context(project: &Project) -> GenerateRequest {
 
 async fn fixture() -> (AppState, Project, PathBuf) {
     let state = AppState::new().await;
+    state.ai_config.lock().embedding = crate::embeddings::EmbeddingConfig {
+        provider: crate::embeddings::EmbeddingProvider::OpenAiCompatible,
+        base_url: "http://localhost:18080/v1".into(),
+        model: "model".into(),
+        revision: "fixture".into(),
+        ..Default::default()
+    };
     let source = ReferenceDocument::new("Notes", "Original", ReferenceType::StyleGuide);
     let mut project = Template::MultiCam.build_project("Retrieval");
     project.references.push(source.clone());
@@ -98,7 +104,7 @@ async fn changed_config_path_or_missing_project_clears_preexisting_context() {
     let scope = state.vector_store.lock().scope();
     let completed_query = query(&state);
     let config = state.ai_config.lock().clone();
-    state.ai_config.lock().base_url = "http://localhost:18081/v1".into();
+    state.ai_config.lock().embedding.base_url = "http://localhost:18081/v1".into();
     let mut request = request_with_old_context(&project);
     attach_rag_embedding(&state, &path, scope, &completed_query, &mut request);
     assert!(request.rag_context.is_empty());
