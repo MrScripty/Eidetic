@@ -470,3 +470,16 @@ async fn pumas_embedding_selection_change_invalidates_pending_source_tickets() {
     ready(&state).await;
     state.shutdown_tasks_async().await;
 }
+
+#[tokio::test]
+async fn selected_root_startup_failure_is_visible_without_provider_fallback() {
+    let mut state = AppState::new().await;
+    state.pumas_startup_error = Some("selected owner unavailable".into());
+    state.ai_config.lock().backend_type = BackendType::Pumas;
+    state.ai_config.lock().base_url.clear();
+    let status = crate::ai_service::get_ai_status(&state).await;
+    assert_eq!(status.backend, BackendType::Pumas);
+    assert!(!status.connected);
+    assert!(status.error.unwrap().contains("selected owner unavailable"));
+    state.shutdown_tasks_async().await;
+}

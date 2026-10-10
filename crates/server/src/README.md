@@ -719,3 +719,8 @@ references are canonical saved SQLite project content.
 The Linux cancelled-startup fixture observes actual `/proc` child disappearance
 after the owned wait receipt before deleting its signal files or ending the test
 runtime; a recorded shutdown RPC alone is not process-cessation evidence.
+
+Explicit selected-root bootstrap failures preserve Pumas as the selected backend
+and expose the actual startup error in AI status. They never silently revert to
+a direct llama.cpp endpoint; an operator can supply a valid explicit Pumas URL
+to retry connection through the existing configuration control.

@@ -49,7 +49,9 @@ model/runtime selection stays explicit. The bootstrap's ownership acknowledgemen
 and exact instance/service generations govern cleanup. Cancelled startup finishes
 its admitted construction and drains an owned service. On application shutdown an
 owned service receives a generation-fenced shutdown and its child exit is observed.
-A borrowed Pumas service receives no implicit unload/shutdown. **Unload** is an
+A borrowed Pumas service receives no implicit unload/shutdown. Explicit bootstrap
+failures appear in AI status and keep Pumas selected; they do not revert to a
+direct llama.cpp endpoint. **Unload** is an
 explicit operator action on the selected model/profile, including borrowed models.
 For non-Linux systems start Pumas separately and borrow its endpoint.
 
@@ -74,7 +76,7 @@ reference text is SQLite project content and is never discarded by index failure
    the model/revision/dimension display. If it fails, inspect the displayed error
    and Pumas's runtime diagnostics; uploading is not proof of embedding success.
 3. Put related notes on a generation target and generate. Confirm the notification
-   names the reference source. Open the existing generation context viewer and
+   names the reference source. Open **Last Generation Prompt** in the Notes panel and
    confirm the retrieved detail appears in the exact prompt sent to Pumas. Inspect
    the actual generated text independently; prompt inclusion demonstrates retrieval
    contribution even if the model chooses not to repeat that detail.

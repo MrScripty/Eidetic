@@ -56,6 +56,18 @@ pub struct AiGenerateChildrenRequest {
 
 pub async fn get_ai_status(state: &AppState) -> AiStatus {
     let config = state.ai_config.lock().clone();
+    if config.backend_type == BackendType::Pumas
+        && config.base_url.is_empty()
+        && let Some(error) = &state.pumas_startup_error
+    {
+        return AiStatus {
+            backend: BackendType::Pumas,
+            model: config.model,
+            connected: false,
+            message: None,
+            error: Some(format!("Pumas startup failed: {error}")),
+        };
+    }
     let backend = Backend::from_config(&config);
 
     match backend.health_check().await {

@@ -148,6 +148,7 @@ pub struct AppState {
     /// Model library from Pumas for listing available local models.
     pub model_library: Option<Arc<ModelLibrary>>,
     pub(crate) pumas_runtime: Option<Arc<crate::pumas_runtime::PumasRuntime>>,
+    pub(crate) pumas_startup_error: Option<String>,
     /// Backend-owned transient timeline selection projected to renderers and UI.
     pub selected_timeline_node_id: Arc<Mutex<Option<NodeId>>>,
     /// Backend-owned transient playhead position projected across timeline surfaces.
@@ -190,14 +191,22 @@ impl AppState {
         // Initialize the Pumas model library (optional — best-effort).
         let model_library = Self::init_model_library().await;
 
-        let pumas_runtime = match crate::pumas_runtime::PumasRuntime::from_environment().await {
-            Ok(runtime) => runtime,
-            Err(error) => {
-                tracing::error!(%error,"Pumas connection initialization failed");
-                None
-            }
-        };
+        let (pumas_runtime, pumas_startup_error) =
+            match crate::pumas_runtime::PumasRuntime::from_environment().await {
+                Ok(runtime) => (runtime, None),
+                Err(error) => {
+                    tracing::error!(%error,"Pumas connection initialization failed");
+                    (None, Some(error))
+                }
+            };
         let mut ai_config = AiConfig::default();
+        if pumas_startup_error.is_some() {
+            // An explicitly selected Pumas root must fail visibly, rather than
+            // silently reverting to another local provider.
+            ai_config.backend_type = BackendType::Pumas;
+            ai_config.base_url.clear();
+            ai_config.model.clear();
+        }
         if let Some(runtime) = &pumas_runtime {
             ai_config.backend_type = BackendType::Pumas;
             ai_config.base_url = runtime.description.endpoint.as_str().to_owned();
@@ -221,6 +230,7 @@ impl AppState {
             save_tx,
             model_library,
             pumas_runtime,
+            pumas_startup_error,
             selected_timeline_node_id: Arc::new(Mutex::new(None)),
             timeline_playhead_ms: Arc::new(Mutex::new(0)),
             task_supervisor,
