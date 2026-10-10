@@ -3,30 +3,36 @@
     notes,
     context,
     loading,
-    onrefresh,
+    onrefresh = () => {},
+    label = 'Raw AI Prompt',
+    refreshable = true,
   }: {
     notes: string;
     context: { system: string; user: string } | null;
     loading: boolean;
-    onrefresh: () => void;
+    onrefresh?: () => void;
+    label?: string;
+    refreshable?: boolean;
   } = $props();
 </script>
 
 {#if notes.trim()}
   <details class="context-panel">
     <summary class="context-panel-summary">
-      Raw AI Prompt
-      <button
-        type="button"
-        class="context-refresh-btn"
-        onclick={(event) => {
-          event.stopPropagation();
-          onrefresh();
-        }}
-        disabled={loading}
-      >
-        {loading ? 'Loading...' : 'Refresh'}
-      </button>
+      {label}
+      {#if refreshable}
+        <button
+          type="button"
+          class="context-refresh-btn"
+          onclick={(event) => {
+            event.stopPropagation();
+            onrefresh();
+          }}
+          disabled={loading}
+        >
+          {loading ? 'Loading...' : 'Refresh'}
+        </button>
+      {/if}
     </summary>
     {#if context}
       <div class="context-display">

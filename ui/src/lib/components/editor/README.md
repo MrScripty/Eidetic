@@ -263,3 +263,11 @@ owner preserves drafts through navigation and retries immutable uncertain writes
 `ScriptTimelineTitleEvidence` shows original/current changed consumed names or
 owned removal. Unchanged supplied titles remain bound to the proposal. Existing
 Preview update and Accept update remain separate replacement actions.
+
+`BeatNotesPanel` exposes the existing generation-context receipt for its exact
+selected node as **Last Generation Prompt**. This read-only prompt includes the
+retrieved reference chunks actually attached before provider I/O, separately from
+the refreshable current-context preview. `AiPromptPreview` accepts a label and
+refreshable flag so inspecting the consumed prompt cannot replace it with a fresh
+preview. `AiPromptPreview.ssr.test.ts` verifies retrieved text is visible and that
+the consumed prompt has no Refresh control.

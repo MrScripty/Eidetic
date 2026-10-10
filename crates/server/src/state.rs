@@ -29,8 +29,6 @@ pub mod constants {
     pub const REFERENCE_CHUNK_SIZE: usize = 500;
     /// Reference document chunk overlap in characters.
     pub const REFERENCE_CHUNK_OVERLAP: usize = 50;
-    /// Embedding model name.
-    pub const EMBEDDING_MODEL: &str = "nomic-embed-text";
     /// Number of top RAG results to include.
     pub const RAG_TOP_K: usize = 3;
 }
@@ -62,6 +60,11 @@ pub enum ServerEvent {
         node_id: uuid::Uuid,
         error: String,
     },
+    ReferenceRetrieval {
+        node_id: uuid::Uuid,
+        sources: Vec<String>,
+        error: Option<String>,
+    },
     BibleChanged,
     ScriptChanged,
     SemanticProposalsChanged,
@@ -81,6 +84,7 @@ pub enum ServerEvent {
 #[serde(rename_all = "snake_case")]
 pub enum BackendType {
     LlamaCpp,
+    Pumas,
     OpenRouter,
 }
 
@@ -93,6 +97,10 @@ pub struct AiConfig {
     pub max_tokens: usize,
     pub base_url: String,
     pub api_key: Option<String>,
+    #[serde(default)]
+    pub pumas_profile: String,
+    #[serde(default)]
+    pub embedding: crate::embeddings::EmbeddingConfig,
 }
 
 impl Default for AiConfig {
@@ -104,6 +112,8 @@ impl Default for AiConfig {
             max_tokens: constants::DEFAULT_MAX_TOKENS,
             base_url: constants::DEFAULT_LLAMACPP_URL.into(),
             api_key: None,
+            pumas_profile: String::new(),
+            embedding: crate::embeddings::EmbeddingConfig::default(),
         }
     }
 }
@@ -137,6 +147,8 @@ pub struct AppState {
     save_tx: tokio::sync::mpsc::Sender<()>,
     /// Model library from Pumas for listing available local models.
     pub model_library: Option<Arc<ModelLibrary>>,
+    pub(crate) pumas_runtime: Option<Arc<crate::pumas_runtime::PumasRuntime>>,
+    pub(crate) pumas_startup_error: Option<String>,
     /// Backend-owned transient timeline selection projected to renderers and UI.
     pub selected_timeline_node_id: Arc<Mutex<Option<NodeId>>>,
     /// Backend-owned transient playhead position projected across timeline surfaces.
@@ -179,6 +191,29 @@ impl AppState {
         // Initialize the Pumas model library (optional — best-effort).
         let model_library = Self::init_model_library().await;
 
+        let (pumas_runtime, pumas_startup_error) =
+            match crate::pumas_runtime::PumasRuntime::from_environment().await {
+                Ok(runtime) => (runtime, None),
+                Err(error) => {
+                    tracing::error!(%error,"Pumas connection initialization failed");
+                    (None, Some(error))
+                }
+            };
+        let mut ai_config = AiConfig::default();
+        if pumas_startup_error.is_some() {
+            // An explicitly selected Pumas root must fail visibly, rather than
+            // silently reverting to another local provider.
+            ai_config.backend_type = BackendType::Pumas;
+            ai_config.base_url.clear();
+            ai_config.model.clear();
+        }
+        if let Some(runtime) = &pumas_runtime {
+            ai_config.backend_type = BackendType::Pumas;
+            ai_config.base_url = runtime.description.endpoint.as_str().to_owned();
+            ai_config.model.clear();
+            ai_config.embedding.base_url = ai_config.base_url.clone();
+        }
+
         Self {
             project,
             project_session_gate,
@@ -186,7 +221,7 @@ impl AppState {
             events_tx,
             doc_tx,
             doc_update_tx,
-            ai_config: Arc::new(Mutex::new(AiConfig::default())),
+            ai_config: Arc::new(Mutex::new(ai_config)),
             generating: Arc::new(Mutex::new(HashSet::new())),
             #[cfg(test)]
             project_path,
@@ -194,6 +229,8 @@ impl AppState {
             vector_store: Arc::new(Mutex::new(VectorStore::new())),
             save_tx,
             model_library,
+            pumas_runtime,
+            pumas_startup_error,
             selected_timeline_node_id: Arc::new(Mutex::new(None)),
             timeline_playhead_ms: Arc::new(Mutex::new(0)),
             task_supervisor,
@@ -220,6 +257,11 @@ impl AppState {
 
     pub async fn shutdown_tasks_async(&self) {
         self.task_supervisor.shutdown_all().await;
+        if let Some(runtime) = &self.pumas_runtime {
+            if let Err(error) = runtime.shutdown().await {
+                tracing::error!(%error,"Owned Pumas shutdown failed");
+            }
+        }
     }
 
     /// Initialize the Pumas model library from env or sibling directory.

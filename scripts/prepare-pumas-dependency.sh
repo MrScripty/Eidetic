@@ -6,7 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_PUMAS_ROOT="$(cd "$PROJECT_ROOT/../.." && pwd)/ai-systems/Pumas-Library"
 PUMAS_ROOT="${EIDETIC_PUMAS_LIBRARY_ROOT:-$DEFAULT_PUMAS_ROOT}"
 PUMAS_REPOSITORY="${EIDETIC_PUMAS_LIBRARY_REPOSITORY:-https://github.com/MrScripty/Pumas-Library.git}"
-PUMAS_REF="${EIDETIC_PUMAS_LIBRARY_REF:-a94fd92021f27fdeedb6e2de6e01c41c250ef576}"
+PUMAS_REF="${EIDETIC_PUMAS_LIBRARY_REF:-ad31e391dcd94c204b3fcd748cc98d27b3281e65}"
 PUMAS_PACKAGE_PATH="$PUMAS_ROOT/rust/crates/pumas-core"
 
 log() {

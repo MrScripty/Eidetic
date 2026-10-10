@@ -1,3 +1,4 @@
+import { notify } from './notifications.svelte.js';
 import type { ServerEventClient } from '$lib/serverEventClient.js';
 import { invalidateScriptContext } from './scriptDocumentProjection.svelte.js';
 import { invalidateBibleRecall } from './bibleRecallProjection.svelte.js';
@@ -135,6 +136,10 @@ export function setupServerEventHandlers(events: ServerEventClient): () => void 
       ]);
     }),
 
+    events.on('reference_retrieval', (data) => {
+      if (data.error) notify('error', `Reference retrieval unavailable: ${data.error}`);
+      else notify('info', `Generation used references: ${data.sources.join(', ')}`);
+    }),
     events.on('generation_context', (data) => {
       setGenerationContext(data.node_id, data.system_prompt, data.user_prompt);
     }),

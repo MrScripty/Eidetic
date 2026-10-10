@@ -50,7 +50,7 @@ EIDETIC_FETCH_PUMAS=1 scripts/prepare-pumas-dependency.sh
 Default source contract:
 
 - Repository: `https://github.com/MrScripty/Pumas-Library.git`
-- Revision: `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`
+- Revision: `ad31e391dcd94c204b3fcd748cc98d27b3281e65`
 - Required package: `pumas-library`
 - Required local path: `../../ai-systems/Pumas-Library/rust/crates/pumas-core`
 
@@ -74,3 +74,10 @@ private mirror or an already provisioned checkout.
   it is rejected as a breaking downgrade. The dependency gate blocks
   high/critical npm advisories and leaves this low advisory tracked here until a
   compatible SvelteKit release resolves it.
+
+The current local-inference consumer uses Pumas 0.8.0-rc.1's HTTP advertisement /
+admission-fence schema 1, typed model-operation contract 1 and serving RPC DTOs.
+Build `pumas-rpc` with its default `inference-plugins` feature; an inference-disabled
+binary is explicitly refused. The path dependency and `Cargo.lock` package version
+match the setup pin. See [local acceptance](pumas-local-inference.md) for runtime
+setup; no application model is downloaded during build or test.

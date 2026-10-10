@@ -18,6 +18,9 @@ pub(crate) struct IndexTicket {
 struct IndexedDocument {
     revision: Uuid,
     source: Arc<ReferenceDocument>,
+    error: Option<String>,
+    complete: bool,
+    stale: bool,
 }
 
 /// Disposable retrieval index. Canonical references remain in the project.
@@ -57,9 +60,93 @@ impl VectorStore {
             IndexedDocument {
                 revision: ticket.revision,
                 source,
+                error: None,
+                complete: false,
+                stale: false,
             },
         );
         ticket
+    }
+
+    pub(crate) fn ticket_current(&self, ticket: &IndexTicket) -> bool {
+        ticket.scope == self.scope
+            && self
+                .documents
+                .get(&ticket.document_id)
+                .is_some_and(|doc| doc.revision == ticket.revision)
+    }
+
+    pub(crate) fn finish_document(
+        &mut self,
+        ticket: &IndexTicket,
+        sources: &[ReferenceDocument],
+        error: Option<String>,
+    ) {
+        if !self.ticket_current(ticket) {
+            return;
+        }
+        let Some(doc) = self.documents.get_mut(&ticket.document_id) else {
+            return;
+        };
+        if !source_is_current(&doc.source, sources) {
+            return;
+        }
+        doc.complete = true;
+        doc.error = error;
+        if doc.error.is_some() {
+            self.entries
+                .retain(|_, (chunk, _)| chunk.document_id != ticket.document_id);
+        }
+    }
+
+    pub(crate) fn mark_incompatible(&mut self, query: &Embedding) {
+        for (chunk, embedding) in self.entries.values() {
+            if (embedding.identity != query.identity
+                || embedding.values.len() != query.values.len())
+                && let Some(doc) = self.documents.get_mut(&chunk.document_id)
+            {
+                doc.stale = true;
+                doc.error = Some(
+                    "Embedding model revision or dimensions changed; Reindex references".into(),
+                );
+            }
+        }
+    }
+
+    pub(crate) fn document_status(
+        &self,
+        source: &ReferenceDocument,
+    ) -> crate::reference_service::ReferenceDocumentIndexStatus {
+        let document = self
+            .documents
+            .get(&source.id)
+            .filter(|doc| source_is_current(&doc.source, std::slice::from_ref(source)));
+        let entries: Vec<_> = self
+            .entries
+            .values()
+            .filter(|(chunk, _)| chunk.document_id == source.id)
+            .collect();
+        crate::reference_service::ReferenceDocumentIndexStatus {
+            document_id: source.id.0,
+            name: source.name.clone(),
+            state: match document {
+                None => "needs_reindex",
+                Some(doc) if doc.stale => "stale",
+                Some(doc) if doc.error.is_some() => "failed",
+                Some(doc) if doc.complete => "ready",
+                _ => "indexing",
+            }
+            .into(),
+            indexed_chunks: entries.len(),
+            dimensions: entries.first().map(|(_, embedding)| embedding.values.len()),
+            model: entries
+                .first()
+                .map(|(_, embedding)| embedding.model().to_owned()),
+            revision: entries
+                .first()
+                .map(|(_, embedding)| embedding.revision_label()),
+            error: document.and_then(|doc| doc.error.clone()),
+        }
     }
 
     /// Caller holds the project guard through publication, closing the deletion race.

@@ -242,6 +242,8 @@ pub(crate) fn replace_active_project(
     *state.project_session_id.lock() = uuid::Uuid::new_v4();
     state.project_database.set_active_path(path);
     *active = Some(project);
+    drop(active);
+    crate::reference_service::schedule_reopened_index(state);
 }
 
 pub async fn list_projects() -> serde_json::Value {

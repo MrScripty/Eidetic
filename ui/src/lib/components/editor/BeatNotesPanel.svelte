@@ -10,6 +10,7 @@
     streamingTokenCount,
     generationError,
     nodeContext,
+    generationContext = null,
     contextLoading,
     editorNode,
     onrefreshcontext,
@@ -20,6 +21,7 @@
     generationError: string | null;
     nodeContext: { system: string; user: string } | null;
     contextLoading: boolean;
+    generationContext?: { system: string; user: string } | null;
     editorNode: SelectedNodeEditorNode;
     onrefreshcontext: () => void;
   } = $props();
@@ -38,6 +40,15 @@
     <div class="error-banner">{generationError}</div>
   {/if}
 
+  {#if generationContext}
+    <AiPromptPreview
+      notes={node.content.notes}
+      context={generationContext}
+      loading={false}
+      label="Last Generation Prompt"
+      refreshable={false}
+    />
+  {/if}
   <AiPromptPreview
     notes={node.content.notes}
     context={nodeContext}

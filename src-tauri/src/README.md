@@ -100,3 +100,19 @@ The Bevy timeline bridge continues submitting legacy range commands with no expe
 The command registry includes `projection_bible_recall` for explicit selected
 Bible entity inspection; screenplay replacement remains behind existing review
 and acceptance commands.
+
+Pumas desktop commands retain backend ownership: `pumas_catalog` projects installed
+model/profile choices, `pumas_load_model` / `pumas_unload_model` consume Pumas's
+actual serving DTOs, and `ai_config_get` returns current independent chat and
+embedding selections. `reference_index_status` and `reference_reindex` expose
+source-bound derived indexing without changing canonical reference storage.
+Owned Pumas bootstrap cleanup runs through `AppState::shutdown_tasks_async` on
+window shutdown. Borrowed services receive no implicit unload/shutdown request.
+
+Window destruction observes backend/Pumas shutdown with `block_on` before exit
+can tear down the async runtime. A spawned fire-and-forget drain is insufficient
+for an owned Pumas child; the exact child exit receipt must remain awaited.
+
+`pumas_unload_model` returns the actual typed `UnserveModelResponse` after backend
+failure checks; the frontend preserves `unloaded: false` as already unserved
+rather than claiming the runtime performed an unload.

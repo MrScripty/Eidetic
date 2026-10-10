@@ -1,17 +1,47 @@
 <script lang="ts">
+  import type { ReferenceIndexStatus } from '$lib/aiTypes.js';
   import type { ReferenceDocument, ReferenceType } from '$lib/projectTypes.js';
-  import { uploadReference, listReferences, deleteReference } from '$lib/api.js';
+  import {
+    uploadReference,
+    listReferences,
+    deleteReference,
+    getReferenceIndexStatus,
+    reindexReferences,
+  } from '$lib/api.js';
   import { notify } from '$lib/stores/notifications.svelte.js';
 
   let refs = $state<ReferenceDocument[]>([]);
+  let index = $state<ReferenceIndexStatus | null>(null);
+  let indexMessage = $state('');
   let name = $state('');
   let content = $state('');
   let docType = $state<ReferenceType>('StyleGuide');
 
+  async function refreshIndex() {
+    try {
+      index = await getReferenceIndexStatus();
+      refs = await listReferences();
+    } catch (error) {
+      index = null;
+      refs = [];
+      indexMessage = String(error);
+    }
+  }
+  async function reindex() {
+    try {
+      await reindexReferences();
+      indexMessage = 'Reindexing saved reference text';
+      await refreshIndex();
+    } catch (error) {
+      indexMessage = String(error);
+    }
+  }
   $effect(() => {
-    listReferences()
-      .then((r) => (refs = r))
-      .catch(() => {});
+    void refreshIndex();
+    const timer = setInterval(() => {
+      void refreshIndex();
+    }, 1500);
+    return () => clearInterval(timer);
   });
 
   async function handleUpload() {
@@ -21,7 +51,8 @@
       refs = [...refs, doc];
       name = '';
       content = '';
-      notify('success', 'Reference uploaded — embedding in background');
+      notify('success', 'Reference saved; check indexing status below');
+      await refreshIndex();
     } catch {
       notify('error', 'Failed to upload reference');
     }
@@ -65,6 +96,16 @@
     >
   </div>
 
+  <button type="button" onclick={reindex}>Reindex references</button>
+  {#if indexMessage}<p role="status">{indexMessage}</p>{/if}
+  {#each index?.documents ?? [] as status (status.document_id)}
+    <p role="status">
+      {status.name}: {status.state}{status.model ? ` (${status.model}, ${status.revision})` : ''} — {status.indexed_chunks}
+      chunks{status.dimensions ? `, ${status.dimensions} dimensions` : ''}{status.error
+        ? `: ${status.error}`
+        : ''}
+    </p>
+  {/each}
   <div class="ref-list">
     {#each refs as ref (ref.id)}
       <div class="ref-item">
