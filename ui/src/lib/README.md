@@ -190,3 +190,12 @@ boundary, preserving unrelated author drafts and backend source/version custody.
 
 Timeline title transport carries exact text and its owned field read to the
 canonical native rename command; it does not use generic sparse object fields.
+
+Local inference contracts add `pumas` chat selection, independent
+`EmbeddingConfig`, reference index status and Pumas catalog projections in
+`aiTypes.ts`. `api.ts` uses the existing desktop invocation boundary for current
+AI configuration, installed Pumas model/profile selection, explicit Load/Unload,
+and saved-reference Reindex/status. Pumas serving requests preserve the selected
+provider/profile/device scope; no provider process lifecycle lives in the renderer.
+`serverEventTypes.ts` includes `reference_retrieval` source names or an error for
+the actual generation attachment, separate from upload acknowledgement.
