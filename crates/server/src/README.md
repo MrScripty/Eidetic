@@ -715,3 +715,7 @@ or a visible error before the actual generation context event. Disabled or faile
 retrieval permits ordinary generation with the error displayed; it does not claim
 references contributed. Configuration is application-session state, as before;
 references are canonical saved SQLite project content.
+
+The Linux cancelled-startup fixture observes actual `/proc` child disappearance
+after the owned wait receipt before deleting its signal files or ending the test
+runtime; a recorded shutdown RPC alone is not process-cessation evidence.

@@ -285,7 +285,7 @@ mod tests {
         let ack = json!({"bootstrap_schema_version":1,"ownership":"owned","description":description(&fixture.url)});
         // Delay acknowledgement to deterministically cancel the awaiting caller.
         // The fixture process exits only after the exact fenced shutdown request.
-        std::fs::write(&binary,format!("#!/bin/sh\ntouch '{}/started'\nsleep 0.1\nprintf '%s\\n' 'PUMAS_LOCAL_ACCESS={ack}'\nwhile [ ! -e '{}/exit' ]; do sleep 0.01; done\n",root.display(),root.display())).unwrap();
+        std::fs::write(&binary,format!("#!/bin/sh\nprintf '%s' \"$$\" > '{}/started'\nsleep 0.1\nprintf '%s\\n' 'PUMAS_LOCAL_ACCESS={ack}'\nwhile [ ! -e '{}/exit' ]; do sleep 0.01; done\n",root.display(),root.display())).unwrap();
         std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o700)).unwrap();
         let requests = fixture.requests.clone();
         let exit_root = root.clone();
@@ -319,8 +319,19 @@ mod tests {
         task.abort();
         assert!(matches!(task.await, Err(error) if error.is_cancelled()));
         observer.await.unwrap();
-        // The shutdown request has been observed; the independent drain owns
-        // the child receipt even if this test caller has already disappeared.
+        // Observe actual child reaping before removing the signal files or ending
+        // the test runtime; a shutdown request alone is not cessation evidence.
+        let pid = std::fs::read_to_string(root.join("started"))
+            .unwrap()
+            .parse::<u32>()
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(10), async {
+            while Path::new(&format!("/proc/{pid}")).exists() {
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }
 }

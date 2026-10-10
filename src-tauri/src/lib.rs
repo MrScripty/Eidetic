@@ -81,9 +81,9 @@ pub fn run() {
                     let _ = timeline_owner.stop();
                 }
                 let app_state = window.state::<AppState>().inner().clone();
-                tauri::async_runtime::spawn(async move {
-                    app_state.shutdown_tasks_async().await;
-                });
+                // Observe the owned Pumas drain before desktop exit can tear
+                // down the runtime that carries its shutdown receipt.
+                tauri::async_runtime::block_on(app_state.shutdown_tasks_async());
             }
         })
         .invoke_handler(tauri::generate_handler![

@@ -108,3 +108,7 @@ embedding selections. `reference_index_status` and `reference_reindex` expose
 source-bound derived indexing without changing canonical reference storage.
 Owned Pumas bootstrap cleanup runs through `AppState::shutdown_tasks_async` on
 window shutdown. Borrowed services receive no implicit unload/shutdown request.
+
+Window destruction observes backend/Pumas shutdown with `block_on` before exit
+can tear down the async runtime. A spawned fire-and-forget drain is insufficient
+for an owned Pumas child; the exact child exit receipt must remain awaited.
