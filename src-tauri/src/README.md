@@ -42,6 +42,8 @@ crates own project state and command semantics.
 - Moving command policy into Svelte stores: rejected because backend state is
   authoritative.
 
+Native graph and timeline runners reserve one process-wide winit event loop. Hiding/showing the existing owner reuses it; another renderer or a terminated runner cannot create a second loop. Rejected starts return an actionable restart message through existing runner-error status instead of panicking. The main timeline remains usable. This is a bounded guard, not unified multi-window rendering.
+
 ## Invariants
 - The desktop builder registers `command_script_block_create` alongside existing
   edit commands so an empty screenplay can be authored through the same native

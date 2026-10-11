@@ -5,6 +5,72 @@ pub enum DesktopRendererWindowKind {
     Timeline,
 }
 
+// Winit permits one event loop per process, even after the first loop exits.
+// A hidden renderer keeps its original runner; a new runner must not recreate it.
+static NATIVE_EVENT_LOOP: std::sync::OnceLock<DesktopRendererWindowKind> =
+    std::sync::OnceLock::new();
+
+pub(crate) fn reserve_native_event_loop(kind: DesktopRendererWindowKind) -> std::io::Result<()> {
+    reserve_event_loop(&NATIVE_EVENT_LOOP, kind)
+}
+
+fn reserve_event_loop(
+    reservation: &std::sync::OnceLock<DesktopRendererWindowKind>,
+    kind: DesktopRendererWindowKind,
+) -> std::io::Result<()> {
+    reservation.set(kind).map_err(|_| {
+        let owner = reservation.get().expect("event loop reservation is set");
+        std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            format!(
+                "The native {owner:?} renderer already reserved this process's winit event loop. \
+                 Restart Eidetic and open the native {kind:?} renderer first. \
+                 The main timeline remains available."
+            ),
+        )
+    })
+}
+
+#[cfg(test)]
+mod event_loop_tests {
+    use super::*;
+    use std::sync::OnceLock;
+
+    #[test]
+    fn rejects_a_second_renderer_and_recreation_with_actionable_error() {
+        for owner in [
+            DesktopRendererWindowKind::BibleGraph,
+            DesktopRendererWindowKind::Timeline,
+        ] {
+            let reservation = OnceLock::new();
+            reserve_event_loop(&reservation, owner).unwrap();
+            for next in [
+                DesktopRendererWindowKind::BibleGraph,
+                DesktopRendererWindowKind::Timeline,
+            ] {
+                let error = reserve_event_loop(&reservation, next).unwrap_err();
+                assert_eq!(error.kind(), std::io::ErrorKind::AlreadyExists);
+                assert!(error.to_string().contains("Restart Eidetic"));
+                assert_eq!(reservation.get(), Some(&owner));
+            }
+        }
+    }
+
+    #[test]
+    fn concurrent_starts_admit_only_one_native_event_loop() {
+        let reservation = OnceLock::new();
+        let accepted = std::thread::scope(|scope| {
+            let graph = scope
+                .spawn(|| reserve_event_loop(&reservation, DesktopRendererWindowKind::BibleGraph));
+            let timeline = scope
+                .spawn(|| reserve_event_loop(&reservation, DesktopRendererWindowKind::Timeline));
+            usize::from(graph.join().unwrap().is_ok())
+                + usize::from(timeline.join().unwrap().is_ok())
+        });
+        assert_eq!(accepted, 1);
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DesktopRendererWindowStrategy {

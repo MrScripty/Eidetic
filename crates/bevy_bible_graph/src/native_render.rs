@@ -7,6 +7,7 @@ use std::time::{Duration, Instant};
 use bevy::app::AppExit;
 use bevy::asset::{Asset, embedded_asset};
 use bevy::color::LinearRgba;
+use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel};
@@ -759,6 +760,7 @@ fn spawn_bible_graph_renderer_window_scene(
 ) {
     commands.spawn((
         Camera3d::default(),
+        Tonemapping::None,
         Transform::from_xyz(0.0, 0.0, 900.0).looking_at(Vec3::ZERO, Vec3::Y),
         BibleGraphNativeCamera,
     ));

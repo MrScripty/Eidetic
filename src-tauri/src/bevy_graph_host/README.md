@@ -42,6 +42,8 @@ drain boundary.
 - Driving native rendering directly from Svelte: rejected because Bevy owns the
   native window lifecycle.
 
+Native graph and timeline runners reserve one process-wide winit event loop. Hiding/showing the existing owner reuses it; another renderer or a terminated runner cannot create a second loop. Rejected starts return an actionable restart message through existing runner-error status instead of panicking. The main timeline remains usable. This is a bounded guard, not unified multi-window rendering.
+
 ## Invariants
 
 - The owner/supervisor owns all renderer thread lifecycle transitions.

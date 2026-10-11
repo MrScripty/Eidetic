@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { formatProjectModified } from '$lib/projectModified.js';
   import { fade } from 'svelte/transition';
   import { projectState } from '$lib/stores/project.svelte.js';
   import { activateProjectSession } from '$lib/stores/projectSession.js';
@@ -72,19 +73,6 @@
       busy = false;
     }
   }
-
-  function formatDate(iso: string): string {
-    try {
-      const d = new Date(iso);
-      return (
-        d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
-        ' ' +
-        d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-      );
-    } catch {
-      return iso;
-    }
-  }
 </script>
 
 {#if !projectState.current}
@@ -148,7 +136,7 @@
                 onclick={() => handleLoadProject(proj.path)}
               >
                 <span class="project-name">{proj.name}</span>
-                <span class="project-modified">{formatDate(proj.modified)}</span>
+                <span class="project-modified">{formatProjectModified(proj.modified)}</span>
               </button>
             {/each}
           </div>
