@@ -1,0 +1,127 @@
+{
+  "repository": "MrScripty/Eidetic",
+  "branch": "codex/native-workflow-acceptance",
+  "source_commit": "18d6c5e0c51c2c6b75f161939ce4b32f0bfb6338",
+  "base_main": "7e963d58036c4a576a6750d7fc0b7916262f03e4",
+  "ui_source_tree": "e9538762bed0ab7cef0d15edb2203f3b719091d4",
+  "native_executable_sha256": "c848a99462975bb06e317d12f760bae783c678518365577870cf40b10ca6424f",
+  "pumas_dependency_pin": "a94fd92021f27fdeedb6e2de6e01c41c250ef576",
+  "fixture_source": "crates/server/examples/portfolio_authored_demo.rs",
+  "fixture_source_sha256": "96f40bbeb1f70dc306c47ed685a77ad136c7830d4b322d40cac6445f8d0d35b7",
+  "fixture_authorship": "original authored fiction; public backend commands; no model generation",
+  "fixture_counts": {
+    "acts": 3,
+    "sequences": 3,
+    "scenes": 6,
+    "screenplay_blocks": 18,
+    "authored_bible_nodes": 5,
+    "authored_edges": 5,
+    "auto_created_schema_roots": 8
+  },
+  "ui_saved_edits": {
+    "first_heading": "EXT. NORTHBREAK HARBOR - BLUE HOUR",
+    "mara_tagline": "She can repair anything except a goodbye. Until tonight.",
+    "first_scene_title_restored": "01 | A signal at dusk"
+  },
+  "frontend": "production Vite build served at http://localhost:5173 in real native Tauri WebKit window",
+  "capture": "native window ImageMagick import; no pixel edits",
+  "runtime": {
+    "os": "Debian13",
+    "rust": "1.92",
+    "node": "24.12",
+    "gtk": "3.24",
+    "webkit": "2.52",
+    "display": "Xvfb 1920x1080x24",
+    "gpu": "Mesa llvmpipe software Vulkan",
+    "dependency_staging": "workspace-only Debian libraries; local WebKit dependency paths relocated; application source and transport unchanged except committed fixes"
+  },
+  "images": {
+    "graph-controls.png": {
+      "sha256": "97b67b59003a1dfbe718232d3e6f87e905ab6ef19826d601e043b8c81d0fea17",
+      "pixels": [
+        1440,
+        960
+      ],
+      "captured_at_utc": "2026-10-11T21:02:39.897635+00:00"
+    },
+    "native-graph.png": {
+      "sha256": "b335ae86403183ad5d683fda206fc2a6d40c6f737aea65bfd28d8834a0fc6f34",
+      "pixels": [
+        1280,
+        720
+      ],
+      "captured_at_utc": "2026-10-11T21:02:39.753636+00:00"
+    },
+    "native-timeline.png": {
+      "sha256": "228992665dc57a3f790abb44a28e9d3174eeb62aa1fcf6c55aade991507aa532",
+      "pixels": [
+        1280,
+        360
+      ],
+      "captured_at_utc": "2026-10-11T21:03:48.657018+00:00"
+    },
+    "project-open.png": {
+      "sha256": "12d4e3d73f1397eee109427b06ae9df7adbab97f774e1e7c6c21dfda4007a8ca",
+      "pixels": [
+        1440,
+        960
+      ],
+      "captured_at_utc": "2026-10-11T21:04:22.148732+00:00"
+    },
+    "screenplay-timeline.png": {
+      "sha256": "d8f85a18ac887ad5821e944eade2efa7f987bcff72ec9c7e767d87580812db16",
+      "pixels": [
+        1440,
+        960
+      ],
+      "captured_at_utc": "2026-10-11T21:03:52.664999+00:00"
+    },
+    "second-renderer-error.png": {
+      "sha256": "cd82d424700e9863f7ef24aab712a07ef4e7759b581652db3a9f87846f0ec100",
+      "pixels": [
+        1440,
+        960
+      ],
+      "captured_at_utc": "2026-10-11T21:01:25.506324+00:00"
+    },
+    "story-bible-timeline.png": {
+      "sha256": "7c8e223d55ca70f3aac34a5bcd2438a8a5922816c26711cea144ee749f1493e7",
+      "pixels": [
+        1440,
+        960
+      ],
+      "captured_at_utc": "2026-10-11T21:03:51.441010+00:00"
+    }
+  },
+  "frontend_assets": {
+    "_app/env.js": "3c588b75cde522990022a70ade17b3a6db7068f685ac4cb8b31a104f7e258706",
+    "_app/immutable/assets/0._9ytKbrA.css": "44bb58ddfc052265e4457532fcd700e8c472ba08ba63e4fcff07a38fb0e10d1b",
+    "_app/immutable/assets/2.DOENdStS.css": "9c551136fe5ac128115505c1c9532d23d2bec18fd89e5aecc3db06a26990379c",
+    "_app/immutable/chunks/BMZf9QWp.js": "1494e50c85c2b19b4d43ae6d7574c5d29d41e77357e22d3adb40b05d9496043f",
+    "_app/immutable/chunks/BqKqCbIY.js": "969021d9c168e130dc2d1d1b2f5d3a8d16e2479d5e76cb36092ab5bca55e15c9",
+    "_app/immutable/chunks/CqB33THj.js": "965bc06a31248ba6c73e96598b1e44fae1444411827cebf4c8481d64c3dadbfa",
+    "_app/immutable/chunks/DTLJZQfz.js": "1d6758d02389f5da14f7f4dd6fe4ee4ef43beb3c4ec86da90963ed9d3bb26d22",
+    "_app/immutable/chunks/DY1PI5r1.js": "4ff787d724273dcd3b4d09796355ddb5397dfaa9317694a1b4db4cc32e4468ed",
+    "_app/immutable/chunks/Dno82FLv.js": "eabbf5f5ab76feeac081c96d439a80ad63e5f0ad9432f2c12a5a5ef586bb3aaa",
+    "_app/immutable/chunks/nwYdZ4hK.js": "20595f6f90d83d5d78840705f9283d96ed4b768eadd8568acfa5ba4777e75911",
+    "_app/immutable/entry/app.dXB80qUo.js": "02b887c9ecd15ea66052b50f6e432d04a32b4bdf69123aad0a5bf2cbb9e87817",
+    "_app/immutable/entry/start.CLITvshe.js": "3e7435879a5e9638a4bd4220a0f4a1a362d005482f5b6ac86939e014a7afec5d",
+    "_app/immutable/nodes/0.CPKvTq9C.js": "ac7323ec20993128c9a2a9f34081e585a4df362ff9c861ae6324fe6f45311d31",
+    "_app/immutable/nodes/1.WCf3w-RC.js": "4ba6fc552d437153676a2246d7c514cf05e435b739128a954d3a6de0893d2e5b",
+    "_app/immutable/nodes/2.CFWQkg-S.js": "e4b7f2366941356b8d1a0c93fc2cf3541c6d7c385a3106fe5bfa8742f442137d",
+    "_app/version.json": "0fafd687dbdd1878a1fc041dd7ea91a4c91f002b160c27b55e6c56c5bd82a364",
+    "index.html": "151c50f51d9e0cb6bc663f36e16bea545b1bd509a52edd7a91b8d2f1393716d7"
+  },
+  "deferred": [
+    "real chat/embedding inference",
+    "PR29 reference embedding/reindex/retrieval",
+    "model load/cancel/unload and owned-vs-borrowed inference cleanup",
+    "unified multiple Bevy native windows",
+    "native Windows/macOS UI acceptance"
+  ],
+  "preserved_integration_pr": {
+    "number": 29,
+    "head": "b09f9c288b8feeb5da3f1643b085b0338c106dd2",
+    "modified_by_this_branch": false
+  }
+}
