@@ -64,6 +64,8 @@ share one canonical set of graph fixtures.
   because the current Bevy ECS coupling is renderer-local and the extraction
   would not create an independent ownership boundary.
 
+The graph camera disables tonemapping: this renderer displays authored graph data without requiring the optional tonemapping LUT assets.
+
 ## Invariants
 - The workspace timeline presentation enum derives `Default` with
   `CameraAnchoredPanel` explicitly designated; its initial mode and serialized

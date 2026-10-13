@@ -155,6 +155,8 @@ increase coupling by hiding the transaction invariant.
 - Splitting `affect_store.rs` solely by size: rejected because the current
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
+Saved-project listings read modification metadata from project.db, so editing an existing project updates the displayed time even when its directory is unchanged. Timestamps remain decimal Unix seconds.
+
 ## Invariants
 
 - Child-plan list projections recover existing durable canonical proposals and

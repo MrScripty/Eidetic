@@ -47,6 +47,8 @@ Keep the main composition in `AppShell.svelte` but isolate the bottom timeline s
 - Leaving the timeline directly in `AppShell.svelte` with more inline sizing logic: rejected because `AppShell.svelte` already exceeds the decomposition review threshold.
 - Letting the timeline continue to consume remaining flex height: rejected because it makes the bottom editing surface unstable across window sizes.
 
+Project cards format backend Unix-second timestamps, retain compatibility with ISO dates, and display Unknown date when metadata is unavailable.
+
 ## Invariants
 - Workspace modes remain freely navigable while a screenplay creation save is
   pending or uncertain. Project-session owners retain creation and per-block edit drafts/submissions

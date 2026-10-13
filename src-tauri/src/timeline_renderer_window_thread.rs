@@ -41,6 +41,9 @@ pub enum TimelineRendererWindowProjectionUpdateError {
 
 impl TimelineRendererWindowThreadHandle {
     pub fn start(config: TimelineNativeWindowRunnerConfig) -> std::io::Result<Self> {
+        crate::renderer_window::reserve_native_event_loop(
+            crate::renderer_window::DesktopRendererWindowKind::Timeline,
+        )?;
         Self::start_with(config, run_controlled_minimal_timeline_native_window)
     }
 

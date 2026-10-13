@@ -37,6 +37,9 @@ pub enum NativeRendererWindowThreadResult {
 
 impl NativeRendererWindowThreadHandle {
     pub fn start(config: BibleGraphNativeWindowRunnerConfig) -> std::io::Result<Self> {
+        crate::renderer_window::reserve_native_event_loop(
+            crate::renderer_window::DesktopRendererWindowKind::BibleGraph,
+        )?;
         Self::start_with(config, run_controlled_minimal_bible_graph_native_window)
     }
 

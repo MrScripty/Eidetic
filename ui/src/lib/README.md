@@ -11,6 +11,8 @@ This directory holds the shared frontend surface for the Eidetic UI: typed API c
 | `types.ts`                 | Shared TypeScript mirrors of core timeline, story, and UI layout contracts.                      |
 | `bibleGraphSchemaTypes.ts` | Focused TypeScript mirrors for backend-owned bible graph schema projection shapes.               |
 | `api.ts`                   | Tauri command helpers for project, references, AI, models, export, and persistence operations.   |
+| `projectModified.ts` | Formats persisted Unix-second modification timestamps with a readable unknown-date fallback. |
+| `projectModified.test.ts` | Covers backend timestamp compatibility and invalid metadata. |
 | `desktopTransport.ts`      | Tauri IPC detection and command invocation helpers for desktop-hosted frontend code.             |
 | `commandApi.ts`            | Browser-side command helper barrel for backend-owned commands and versioned command projections. |
 | `timelineCommandApi.ts`    | Timeline-specific command helpers that send backend-owned commands through Tauri IPC.            |
