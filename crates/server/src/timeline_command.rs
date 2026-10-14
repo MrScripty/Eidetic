@@ -17,6 +17,7 @@ use eidetic_core::timeline::timing::TimeRange;
 use thiserror::Error;
 
 use crate::history_store::HistoryStoreError;
+pub(crate) use crate::timeline_arc_assignment_history::record_set_timeline_node_arcs_history;
 pub(crate) use crate::timeline_children_history::record_apply_timeline_children_history;
 pub(crate) use crate::timeline_command_history::{
     record_create_timeline_node_history, record_create_timeline_relationship_history,
@@ -26,6 +27,7 @@ pub(crate) use crate::timeline_command_history::{
 };
 pub(crate) use crate::timeline_node_delete_history::record_delete_timeline_node_history;
 pub(crate) use crate::timeline_node_split_history::record_split_timeline_node_history;
+pub(crate) use crate::timeline_sibling_reorder_history::record_reorder_timeline_sibling_history;
 
 #[cfg(test)]
 pub(crate) fn apply_set_timeline_node_range(

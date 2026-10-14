@@ -255,6 +255,8 @@ pub struct BibleContextScope {
 /// revisions also detect edit-and-restore ABA; absence preserves legacy replay.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScriptGenerationTarget {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub arc_membership: Option<super::TimelineArcMembershipInput>,
     pub node_id: crate::timeline::node::NodeId,
     pub start_ms: u64,
     pub end_ms: u64,

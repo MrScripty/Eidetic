@@ -68,6 +68,16 @@ export function getOrphanedScriptBlockRemovals(documentId: string, visibleBlockI
   });
 }
 
+// Canonical disappearance must not hide a still-owned edit or exact retry.
+export function getMissingScriptBlockDrafts(documentId: string, visibleBlockIds: string[]) {
+  return Object.entries(drafts).flatMap(([key, draft]) => {
+    const [document, block] = JSON.parse(key) as [string, string];
+    return document === documentId && draft?.state.editing && !visibleBlockIds.includes(block)
+      ? [draft]
+      : [];
+  });
+}
+
 export function resetSessionScriptBlockEditDrafts(): void {
   generation += 1;
   drafts = Object.create(null) as EditDrafts;
