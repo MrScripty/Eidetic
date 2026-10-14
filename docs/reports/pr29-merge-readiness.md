@@ -48,10 +48,11 @@ because the executor's host home is read-only.
 | `cargo fmt --all -- --check` and `git diff --check` | Pass. |
 | Independent GPT-6.1 Sol High source review | No remaining confirmed P1/P2 in the candidate repair. |
 | `./launcher.sh --test` | Environment-blocked at missing `glib-2.0`; GTK/WebKit development libraries are absent. Full native workspace checks must run in hosted Linux/Windows CI on the pushed head. |
-| `scripts/check-dependencies.sh` | Fails npm high/critical advisory gate: 42 reported vulnerabilities (1 low, 24 moderate, 14 high, 3 critical). Rust audit/deny/machete tools are absent and reported as local skips. The frontend manifests/lockfile are unchanged from main; several high/critical findings have no available fix. Separate dependency maintenance or an explicit parent disposition is required. |
+| `scripts/check-dependencies.sh` | Baseline at `1148fb0e` failed with 42 reported rows (1 low, 24 moderate, 14 high, 3 critical). The [dependency follow-up](pr29-dependency-audit.md) maps and repairs the high/critical findings, adds CI audit/static-build gates, and records the remaining cookie issue. Automatic `fixAvailable` flags were not reliable evidence of upstream fix availability. Rust audit/deny/machete tools remain absent and reported as local skips. |
 
 The PR record owns the exact pushed head and its hosted CI run. Passing source
-checks do not resolve the dependency audit or trained-model acceptance below.
+checks do not resolve trained-model acceptance below. The linked dependency
+follow-up owns the later lockfile, verification and remaining audit disposition.
 
 ## Trained-model acceptance remains blocked
 
