@@ -55,6 +55,16 @@ qualification does not claim native Tauri/Bevy interaction or trained inference.
 Synthetic test/provider responses remain explicitly synthetic. No trained-model
 access, credentials, release or denial bypass belongs to this integration.
 
+Initial exact-head CI run 102 passed Linux full-workspace checks (986 tests),
+frontend (636 tests) and traceability, but Windows failed the existing injected
+renderer panic test. Its 200 ms receive could legitimately time out before the
+panic hook/unwind and OS scheduling completed. The panic case now uses a bounded
+five-second completion-channel wait with the same non-running/Panicked assertions.
+Production stop behavior and the other 200 ms controlled-close tests are unchanged.
+Independent review accepts this scoped synchronization repair; fresh hosted
+Linux/Windows checks on the forward repair remain required. No failed run is
+represented as passing and no test/discovery filter is weakened.
+
 PR29 compatibility is verified only in a disposable integration tree, resolving
 additive documentation conflicts while preserving its producer pin, inference
 lifecycle and reference prompt/retrieval surfaces. That tree is never pushed to

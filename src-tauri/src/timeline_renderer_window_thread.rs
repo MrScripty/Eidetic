@@ -217,7 +217,9 @@ mod tests {
         )
         .unwrap();
 
-        let status = handle.stop(Duration::from_millis(200));
+        // Observe the terminal panic result; panic hooks and OS scheduling are
+        // not required to finish within the short graceful-close test budget.
+        let status = handle.stop(Duration::from_secs(5));
 
         assert!(!status.running);
         assert_eq!(
