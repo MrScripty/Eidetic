@@ -710,3 +710,11 @@ command receipts preserve replay after later edits, deletion or ABA.
 those original receipts instead of rebuilding them from today's timeline.
 Existing generation/proposal dependency rows supply targeted review; saved
 screenplay is replaced only by ordinary explicit acceptance.
+
+## One owned block-type history delta
+
+The shared `script_document_command::block_revision` records the canonical
+`block_kind` once. Manual creation adds its sparse order field without adding
+another kind delta; Change Review receives unique field keys and replay retains
+the original revision. Missing-draft copies preserve the authored draft type,
+while explicit creation remains the canonical Save authority.
