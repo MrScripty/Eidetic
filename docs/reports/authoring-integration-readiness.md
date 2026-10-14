@@ -70,3 +70,34 @@ integration, synchronized only by reviewed forward commits, and retired after
 parent merge/rejection with their exact heads reachable from retained remote refs.
 The isolated producer checkout exists only to test main's unchanged exact pin;
 the user's existing Pumas checkout remains untouched.
+
+## Stage B current composition and repaired regressions
+
+Integration `7e138823` retains both Stage A and product `57b0d2ec` as parents.
+The plan conflict was additive: preserve Notes, Bible exact-text and missing-draft
+scope alongside the saved-block type scope. No production conflict was discarded.
+
+Independent review found two reachable composition defects. A typed edit changed
+from Action to Dialogue, followed by canonical block disappearance, copied the
+original Action type. Missing-draft copy now preserves the actual draft type,
+displays it, and still requires explicit ordinary creation Save while retaining
+the original. Its rendered/controller regression failed with Action before repair.
+The shared block revision now owns kind history; manual creation redundantly
+added another `block_kind`, breaking the change-review UI's keyed field rendering.
+Remove that redundant create-layer addition. The actual persisted review/replay
+regression failed with two kind deltas before repair and now requires one owned
+Dialogue delta, unique review keys and immutable replay history.
+
+Current local Stage B validation passes 129 core and 621 server all-target tests,
+113 files / 641 UI tests, lint/format/typecheck (zero errors and warnings), static
+build, and the inherited high/critical audit policy. The first unisolated rerun
+hit 23 existing read-only-host-data failures; the normal isolated XDG rerun passes
+the complete unchanged test population. No assertion or discovery filter changed.
+
+A current Chromium production-widget smoke was prepared with an explicitly
+synthetic frontend transport fixture. Chromium aborted before page execution:
+its installed SUID sandbox helper is not correctly configured. No sandbox was
+disabled or launch-denial workaround used. There is no current browser capture or
+native interaction acceptance from that attempt. Current compiled-client/SSR
+regressions and public-service/SQLite tests are the actual local evidence; hosted
+native workspace CI and parent disposition of interaction limits remain separate.
