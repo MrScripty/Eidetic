@@ -1,7 +1,11 @@
 <script lang="ts">
   import ScriptBlockEditor from './ScriptBlockEditor.svelte';
   import ScriptBlockRemoval from './ScriptBlockRemoval.svelte';
-  import { getOrphanedScriptBlockRemovals } from '$lib/stores/scriptBlockEditSession.svelte.js';
+  import ScriptMissingDraft from './ScriptMissingDraft.svelte';
+  import {
+    getOrphanedScriptBlockRemovals,
+    getMissingScriptBlockDrafts,
+  } from '$lib/stores/scriptBlockEditSession.svelte.js';
   import ScriptSegmentSource from './ScriptSegmentSource.svelte';
   import ScriptBlockComposer from './ScriptBlockComposer.svelte';
   import { getScriptCreationSource, refreshRetimedScriptSource } from './scriptCreationSource.js';
@@ -69,6 +73,9 @@
   <div class="script-panel-body">
     {#each getOrphanedScriptBlockRemovals(MAIN_SCRIPT_DOCUMENT_ID, projection?.payload.segments.flatMap( (segment) => segment.blocks.map((block) => block.block.id), ) ?? []) as editor}
       <ScriptBlockRemoval {editor} />
+    {/each}
+    {#each getMissingScriptBlockDrafts(MAIN_SCRIPT_DOCUMENT_ID, projection?.payload.segments.flatMap( (segment) => segment.blocks.map((block) => block.block.id), ) ?? []) as editor (editor.blockId)}
+      <ScriptMissingDraft {editor} {source} />
     {/each}
     <ScriptBlockComposer {source} />
     {#if !source && (selectedNodeEditorProjectionState.error || selectedNodePlacementIsStale) && selectedNodeEditorProjectionState.selectedNodeId === editorState.selectedNodeId}

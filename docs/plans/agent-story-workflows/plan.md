@@ -35,7 +35,9 @@ Bible and screenplay review flows. A source regression proves public authored
 Notes changed after generation has no review cause. The bounded successor reuses
 the generation target receipt and owned Notes field history for original/current
 review and explicit selected-block acceptance. See `timeline-notes-review.md`.
-Ancestor/sibling prose, arc membership and project switching remain separate.
+Ancestor/sibling prose and project switching remain separate. The independent
+manual timeline arc-assignment successor adds canonical membership authoring and
+original/current targeted screenplay review; see `timeline-arc-assignment.md`.
 **Current phase:** Authored Bible fact propagation is merged in main
 `302851dbb5bf67cda922b4d79f70623e444891dc`; scene-order continuity is qualified
 at frozen predecessor `441c2a29af6199b53b92f718df43d0ca916b1ce5`.
@@ -1187,3 +1189,26 @@ SQLite and rendered Chromium checks cover interruptions, two clips, lock-after-
 lost-ack recovery, save/discard/reload and canonical conflict. See the audit for
 exact proof boundaries and external source/evidence handoff. No new hosted job,
 schema, embedding or project-switch recovery scope.
+
+### Exact authored Bible freeform text (separate successor)
+
+After independently accepted Notes c703ebb, the actual Bible field draft owner
+reproduction proves that `submitted.trim()` silently removes authored whitespace
+before canonical Save. See [bible-fact-text-custody.md](bible-fact-text-custody.md).
+Reuse the current field writer and owned before/after graph memory, preserving
+submitted freeform text exactly while retaining explicit empty clear. Existing
+Bible proposals and screenplay review/acceptance are not duplicated. No new
+schema, embedding, project-switch or hosted spending scope.
+
+### Missing saved-block draft recovery (separate successor)
+
+Accepted Notes c703ebb and Bible exact-text 9998e15 remain preserved. A rendered
+ScriptPanel reproduction proves an active draft becomes inaccessible when its
+canonical block disappears: only orphaned removal requests were displayed.
+Reuse the existing per-block edit owner and single creation composer for visible
+retention, immutable original retry, explicit discard and explicit copy into a
+new selected-clip draft. Ordinary Save retains canonical UserEdited provenance,
+history and downstream review; copying neither writes nor retires the original.
+See [missing-screenplay-draft-recovery.md](missing-screenplay-draft-recovery.md).
+No project-switch, block-type duplication, new store/schema, Pumas identity
+mapping, hosted job or main merge scope.

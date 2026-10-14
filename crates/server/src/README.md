@@ -698,3 +698,15 @@ UserEdit history and rejects stale/ABA reads under the shared timeline writer gu
 recap titles actually supplied before provider I/O. Existing graph edges and
 proposal bindings support exact impact, stale/ABA refusal, historical/current or
 owned-deletion evidence, and explicit acceptance with refreshed consumed lineage.
+
+## Canonical arc assignment and sibling reorder
+
+`timeline_arc_membership` validates assigned IDs and owned field reads in the
+existing history transaction. `timeline_sibling_order` validates the complete
+sibling/parent membership read and applies the core two-subtree plan atomically
+with source-bound screenplay placement. Sparse owned history and stored original
+command receipts preserve replay after later edits, deletion or ABA.
+`timeline_arc_assignment_history` and `timeline_sibling_reorder_history` validate
+those original receipts instead of rebuilding them from today's timeline.
+Existing generation/proposal dependency rows supply targeted review; saved
+screenplay is replaced only by ordinary explicit acceptance.

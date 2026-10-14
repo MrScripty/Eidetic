@@ -106,3 +106,12 @@ The explicit `command_script_fact_proposal_analyze` command delegates one saved 
 
 `command_timeline_node_name` saves a canonical clip title using the required exact
 title read receipt and existing timeline command publication.
+
+## Clip arc and sibling commands
+
+`command_timeline_node_arcs` and `command_timeline_sibling_reorder` forward typed
+command envelopes to existing public server services. Successful new writes
+publish normal timeline/selected-editor/script/change-review events after the
+canonical transaction. Replays return the stored response without a second
+mutation or source-clock reconstruction. Native adapters own neither membership
+validation nor a duplicate timeline.

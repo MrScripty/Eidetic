@@ -58,6 +58,7 @@ where
     {
         prompt.user.push_str(&format!("\nORIGINAL KNOWN-EMPTY ARC DESCRIPTION APPLICABILITY ({}): description prose was not supplied; field revision {}\n", input.arc_id.0, input.revision_event_id.map(|event| event.0.to_string()).unwrap_or_else(|| "unknown".into())));
     }
+    crate::timeline_arc_membership::append_prompt(&mut prompt.user, binding);
     crate::story_arc_lineage::append_prompt(
         &mut prompt.user,
         binding.arc_inputs.as_deref().unwrap_or_default(),

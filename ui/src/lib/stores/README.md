@@ -89,6 +89,8 @@ continues.
 | `propagationProposalProjection.svelte.ts` | Projection cache and command bridge | Caches backend proposal list and replaces cache from command responses with stale-response guards.                                        | Keep.                                                                                                         |
 | `timelineTitleSession.svelte.ts` | Transient UI state | Exact title intent and immutable uncertain retry within the editor session. | Canonical names/history/dependencies remain backend-owned. |
 | `timelineNotesSession.svelte.ts` | Transient UI state | Per-clip exact Notes drafts, original owned author reads and immutable save retries within the existing editor session. Explicit Save uses the existing canonical Notes command; drafts never become agent inputs before acceptance. |
+| `timelineReorderSession.svelte.ts` | Session-scoped per-clip sibling reorder intent, immutable retries and original owned receipts; canonical order and placement remain in SQLite/projections. |
+| `timelineArcsSession.svelte.ts` | Session-scoped per-clip arc assignment drafts, immutable retries and owned save receipts; canonical membership remains in SQLite/projections. |
 | `timelinePlacementSession.svelte.ts` | Transient UI state | Captured per-node placement intent and immutable uncertain retry within the editor session. | Canonical placement and review remain backend/projection-owned. |
 | `scriptBlockEditSession.svelte.ts`        | Transient UI state                  | Retains independent block text drafts, captured revisions and immutable pending edits across Script consumer replacement. | Keep session scoped; canonical text and propagation remain backend/projection-owned. |
 | `scriptBlockCreationSession.svelte.ts`    | Transient UI state                  | Retains captured creation context, text and immutable pending payload/ID across Script consumer lifetimes; project activation replaces its owner. | Keep session scoped; canonical screenplay remains backend-owned and projection-backed.                        |
@@ -294,3 +296,8 @@ Session-owner registration runs untracked because block components obtain it thr
 
 `timelineTitleSession` owns transient clip title intents in the current editor
 session; live projection refresh never silently rebases an authored pending title.
+
+The existing scriptBlockEditSession exposes active owners absent from the current
+document projection, preserving exact text and original save retry. This is a
+read of current session drafts, not a new recovery store or canonical ownership.
+Session reset retires the collection as before; unrelated drafts stay independent.

@@ -96,7 +96,7 @@ export function createBibleGraphFieldDrafts(options: {
     const owner = options.owner(),
       submitted = value(currentField),
       draft = state.drafts[field.id],
-      request = { submitted: submitted.trim() };
+      request = { submitted };
     requests[field.id] = request;
     const owned = () =>
       options.owner() === owner && state.owner === owner && requests[field.id] === request;

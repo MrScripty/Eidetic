@@ -28,6 +28,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptBlockCreationDraft.svelte.test.ts` | Refused/ambiguous save, exact text and captured-context frontend fixtures. |
 | `scriptBlockCreationRetry.svelte.test.ts` | Lost acknowledgement, exact retry, guarded discard/retarget and definite native placement refusal through actual frontend command/store functions with an invoke fixture. |
 | `ScriptBlockComposer.retry.ssr.test.ts` | Uncertain-save read-only controls, exact retry action and definite-refusal recovery rendering fixtures. |
+| `ScriptMissingDraft.svelte`, `scriptMissingDraft.ts` | Visible missing-block drafts, exact original retry and explicit copy into the existing selected-clip composer. |
+| `scriptMissingDraft.svelte.test.ts` | Removal rendering, independent drafts, read failure/return, guarded copy, cancel and immutable retry. |
 | `ScriptBlockEditor.svelte` | Session-owned per-block edit/save/cancel surface with exact uncertain retry and explicit reload. |
 | `scriptBlockEditDraft.svelte.ts` | Captured draft, immutable pending edit, read comparison and explicit continuation from that version. |
 | `scriptBlockEditComparison.svelte.test.ts` | Exact draft/current-text comparison, explicit version continuation, stale/ABA/read failures, navigation, immutable retry and retired-session fixtures. |
@@ -263,3 +265,14 @@ owner preserves drafts through navigation and retries immutable uncertain writes
 `ScriptTimelineTitleEvidence` shows original/current changed consumed names or
 owned removal. Unchanged supplied titles remain bound to the proposal. Existing
 Preview update and Accept update remain separate replacement actions.
+
+Missing saved blocks do not hide their session-owned manual drafts or uncertain
+original saves. ScriptMissingDraft labels absence from the current view without
+asserting deletion after failed reads. It preserves original block/revision
+identity and offers existing read/retry guards. Explicit copy captures exact text
+and original kind into the idle existing composer for the visibly selected clip;
+it neither restores the old block nor discards the source draft. A busy/uncertain
+source or active composer refuses copy. Cancel of the copy leaves the source
+intact. Only ordinary Save creates new canonical UserEdited material, using the
+existing downstream review and explicit acceptance workflow. Same-ID return
+reattaches the same edit owner and original revision.

@@ -153,6 +153,10 @@ pub(crate) fn load_impact(
     {
         causes.push(cause);
     }
+    if let Some(cause) = crate::timeline_arc_membership::impact(conn, generation_event_id, segment)?
+    {
+        causes.push(cause);
+    }
     causes.extend(crate::timeline_title_lineage::impact(
         conn,
         generation_event_id,

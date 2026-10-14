@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ScriptArcMembershipEvidence from './ScriptArcMembershipEvidence.svelte';
   import ScriptArcEvidence from './ScriptArcEvidence.svelte';
   import ScriptTimelineNotesEvidence from './ScriptTimelineNotesEvidence.svelte';
   import ScriptTimelineTitleEvidence from './ScriptTimelineTitleEvidence.svelte';
@@ -132,6 +133,12 @@
               )?.block.text ?? 'Block no longer available'}</pre>
           </details>
         {/if}
+        <ScriptArcMembershipEvidence
+          previous={proposal.script_review_binding?.arc_membership_previous}
+          current={proposal.script_review_binding?.arc_membership_current}
+          previousFields={proposal.script_review_binding?.arc_previous_inputs}
+          currentFields={proposal.script_review_binding?.arc_inputs}
+        />
         <ScriptTimelineTitleEvidence
           previous={proposal.script_review_binding?.timeline_title_previous}
           current={proposal.script_review_binding?.timeline_title_current}
