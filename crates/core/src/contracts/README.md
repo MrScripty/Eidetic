@@ -220,3 +220,12 @@ Timeline title authoring uses `SetTimelineNodeNameCommand` with a required exact
 Optional `TimelineTitleInput` receipts record exact consumed names and owned clocks
 in generation/proposal JSON. Legacy absence remains unknown; baseline clock None
 is a known canonical read. Recap source IDs avoid ambiguous name-based resolution.
+
+## Clip arc and sibling authoring contracts
+
+`SetTimelineNodeArcsCommand` carries the originally read assigned IDs and owned
+field clock. `ReorderTimelineSiblingCommand` binds the selected node, adjacent
+neighbor and original complete sibling/parent membership read. The selected
+editor projects these reads through optional `arc_read` and `order_read` fields.
+Unknown legacy evidence stays distinct from known empty membership; optional
+consumption on screenplay receipts never backfills unobserved history.

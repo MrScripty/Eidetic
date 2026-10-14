@@ -50,7 +50,7 @@ EIDETIC_FETCH_PUMAS=1 scripts/prepare-pumas-dependency.sh
 Default source contract:
 
 - Repository: `https://github.com/MrScripty/Pumas-Library.git`
-- Revision: `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`
+- Revision: `a94fd92021f27fdeedb6e2de6e01c41c250ef576`
 - Required package: `pumas-library`
 - Required local path: `../../ai-systems/Pumas-Library/rust/crates/pumas-core`
 
@@ -68,9 +68,19 @@ private mirror or an already provisioned checkout.
 - Pumas remains a path dependency until the sibling repository has an agreed
   publication or git-dependency contract. CI must provision the exact expected
   checkout before running Cargo.
-- npm currently reports low-severity `cookie <0.7.0` advisories through
-  `@sveltejs/kit`. The compatible `npm audit fix` path has already been applied;
-  npm's remaining `--force` suggestion would install `@sveltejs/kit@0.0.30`, so
-  it is rejected as a breaking downgrade. The dependency gate blocks
-  high/critical npm advisories and leaves this low advisory tracked here until a
-  compatible SvelteKit release resolves it.
+- `cookie 0.6.0` remains a low-severity finding through SvelteKit's declared
+  `^0.6.0` dependency. The static desktop deployment has no Node HTTP cookie
+  serializer or server load/form endpoints; application input does not supply
+  cookie names, paths or domains. Do not override the producer's dependency
+  contract to make the audit count disappear. The frontend dependency owner must
+  select a supported parent update before adding server-side cookie handling or
+  accepting untrusted cookie metadata. See the exact finding and follow-up in
+  [PR29's dependency audit](reports/pr29-dependency-audit.md).
+
+The 2026-10-14 authoring integration carries the exact reviewed frontend repair
+from PR29 commit `be03aa1f2b7e6e19da632fac3b2b7eb89ec12c73`, without importing
+its Pumas/model lifecycle changes. The security-relevant CI, package manifest,
+lockfile and historical audit report match that source. The repair uses compatible
+patches, SvelteKit 2.70.3 and coordinated Vitest/coverage 4.1.11, retaining Node
+24.12.0 and Vite 6.x. The audit report's previous execution evidence belongs to
+PR29; each new authoring integration must run its own checks and source CI.

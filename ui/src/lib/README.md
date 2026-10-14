@@ -192,3 +192,11 @@ boundary, preserving unrelated author drafts and backend source/version custody.
 
 Timeline title transport carries exact text and its owned field read to the
 canonical native rename command; it does not use generic sparse object fields.
+
+## Guarded arc assignment and sibling reorder
+
+`timelineCommandApi.ts` sends `SetTimelineNodeArcsCommand` and
+`ReorderTimelineSiblingCommand` through the existing desktop command envelope.
+Owned expected reads, original command IDs and replay receipts remain backend
+contracts; frontend drafts cannot manufacture a replacement current read after
+an uncertain write. `timelineCommandTypes.ts` mirrors those contracts.

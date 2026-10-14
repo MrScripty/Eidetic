@@ -92,6 +92,10 @@ jobs:
         working-directory: ui
         run: npm ci
 
+      - name: Frontend dependency audit
+        working-directory: ui
+        run: npm audit --audit-level=high
+
       - name: Frontend lint
         working-directory: ui
         run: npm run lint
@@ -107,6 +111,10 @@ jobs:
       - name: Frontend tests
         working-directory: ui
         run: npm run test
+
+      - name: Frontend static build
+        working-directory: ui
+        run: npm run build
 
   traceability:
     name: Decision Traceability

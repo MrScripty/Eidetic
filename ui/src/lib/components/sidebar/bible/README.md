@@ -140,3 +140,12 @@ verification and failure, and recovery does not rebase them.
 An initial uncached detail failure also exposes Retry saved facts in place.
 Retry uses the same owned refresh, shows Loading while pending, and admits only
 the current node/session response; selecting another node retires the old read.
+
+## Exact authored freeform values
+
+`bibleGraphFieldDrafts.svelte.ts` forwards the exact submitted freeform string,
+including leading/trailing whitespace and Unicode. Empty input retains the
+existing explicit clear; whitespace-only input is authored text. A verified
+matching acknowledgement may clear only its exact owned draft. Conflicts and
+failed or retired reads retain it. `BibleGraphPartFields` and the public writer
+remain the only Save route.

@@ -102,3 +102,11 @@ The Bevy timeline bridge continues submitting legacy range commands with no expe
 The command registry includes `projection_bible_recall` for explicit selected
 Bible entity inspection; screenplay replacement remains behind existing review
 and acceptance commands.
+
+## Authoring command registration
+
+The invoke registry admits `command_timeline_node_arcs` and
+`command_timeline_sibling_reorder` beside existing timeline operations. Their
+adapters preserve the server's original read and replay response; current
+projection events remain the refresh boundary. This adds no provider, model
+bootstrap, native runner or canonical frontend state.
