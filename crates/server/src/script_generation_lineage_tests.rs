@@ -82,6 +82,7 @@ fn edit(conn: &mut Connection, block: &SetScriptBlockCommand, text: &str) {
     script_block_edit::apply_edit_script_block(
         conn,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: block.document_id.clone(),
             block_id: block.block_id.clone(),
             expected_revision_event_id: before.revision_event_id,
@@ -114,6 +115,68 @@ fn impact(conn: &Connection, block: &SetScriptBlockCommand) -> ScriptImpactProje
 
 fn counts(conn: &Connection) -> (i64, i64, i64, i64) {
     conn.query_row("SELECT (SELECT COUNT(*) FROM commands), (SELECT COUNT(*) FROM object_revisions), (SELECT COUNT(*) FROM script_generations), (SELECT COUNT(*) FROM semantic_dependencies)", [], |row| Ok((row.get(0)?,row.get(1)?,row.get(2)?,row.get(3)?))).unwrap()
+}
+
+#[test]
+fn type_only_source_change_reaches_precise_consumers_and_validates_actual_historical_type() {
+    let (mut conn, a, b, c) = fixture();
+    let original = input(&conn, &a);
+    let mut forged = original.clone();
+    forged.block_kind = Some(ScriptBlockKind::Dialogue);
+    let before = counts(&conn);
+    assert!(
+        script_document_command::apply_generated_script_block(
+            &mut conn,
+            &generation(&b, Some(vec![forged]), "Forged"),
+            15
+        )
+        .is_err()
+    );
+    assert_eq!(counts(&conn), before);
+    script_document_command::apply_generated_script_block(
+        &mut conn,
+        &generation(&b, Some(vec![original.clone()]), "Manual B preserved"),
+        15,
+    )
+    .unwrap();
+    script_document_command::apply_generated_script_block(
+        &mut conn,
+        &generation(&c, Some(vec![]), "Unrelated C"),
+        16,
+    )
+    .unwrap();
+    let old_b = input(&conn, &b);
+    let old_c = input(&conn, &c);
+    script_block_edit::apply_edit_script_block(
+        &mut conn,
+        &CommandEnvelope::new(EditScriptBlockCommand {
+            document_id: a.document_id.clone(),
+            block_id: a.block_id.clone(),
+            expected_revision_event_id: original.revision_event_id,
+            text: original.text.clone(),
+            block_kind: Some(ScriptBlockKind::Dialogue),
+        }),
+        20,
+    )
+    .unwrap();
+    assert_eq!(input(&conn, &a).text, original.text);
+    assert_eq!(input(&conn, &a).block_kind, Some(ScriptBlockKind::Dialogue));
+    assert!(impact(&conn, &b).needs_review);
+    assert!(!impact(&conn, &c).needs_review);
+    assert_eq!(
+        impact(&conn, &b).causes[0].consumed_revision_event_id,
+        original.revision_event_id
+    );
+    assert_eq!(input(&conn, &b), old_b);
+    assert_eq!(input(&conn, &c), old_c);
+    // A late result retains the actual Action read after source becomes Dialogue.
+    script_document_command::apply_generated_script_block(
+        &mut conn,
+        &generation(&b, Some(vec![original]), "Late original type"),
+        30,
+    )
+    .unwrap();
+    assert!(impact(&conn, &b).needs_review);
 }
 
 #[test]

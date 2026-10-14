@@ -197,7 +197,7 @@ pub struct CreateScriptBlockCommand {
     pub text: String,
 }
 
-/// A manual edit preserves the canonical block's kind, placement and ownership.
+/// A manual edit preserves placement and ownership; an omitted kind preserves type.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditScriptBlockCommand {
@@ -205,6 +205,31 @@ pub struct EditScriptBlockCommand {
     pub block_id: ScriptBlockId,
     pub expected_revision_event_id: super::ChangeEventId,
     pub text: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub block_kind: Option<ScriptBlockKind>,
+}
+
+#[cfg(test)]
+mod manual_type_wire_tests {
+    #[test]
+    fn omitted_type_keeps_legacy_wire_signature_and_invalid_types_are_rejected() {
+        let value = serde_json::json!({"document_id":"main","block_id":"A","expected_revision_event_id":uuid::Uuid::nil(),"text":"Exact"});
+        let command: super::EditScriptBlockCommand = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(command.block_kind, None);
+        assert_eq!(serde_json::to_value(command).unwrap(), value);
+        let mut invalid = value;
+        invalid["block_kind"] = serde_json::json!("invented");
+        assert!(serde_json::from_value::<super::EditScriptBlockCommand>(invalid).is_err());
+    }
+    #[test]
+    fn authored_type_can_use_the_existing_guarded_edit_operation() {
+        let value = serde_json::json!({
+            "document_id": "script.document.main", "block_id": "block.A",
+            "expected_revision_event_id": uuid::Uuid::nil(),
+            "text": "  Exact authored line — 雨.\n\n  ", "block_kind": "dialogue"
+        });
+        assert!(serde_json::from_value::<super::EditScriptBlockCommand>(value).is_ok());
+    }
 }
 
 /// Remove one exact saved block without changing its timeline placement.
@@ -227,6 +252,9 @@ pub struct ScriptContextBlock {
     pub start_ms: u64,
     pub end_ms: u64,
     pub text: String,
+    /// Supplied type backed by this exact block revision; legacy absence is unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub block_kind: Option<ScriptBlockKind>,
 }
 
 /// Complete continuity-window selection captured with the screenplay inputs.

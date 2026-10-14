@@ -26,6 +26,7 @@
     <p>Block: {editor.blockId}</p>
     <p>Saved revision: {draft.baseRevision}</p>
   </details>
+  <p>Draft block type: {draft.kind.replaceAll('_', ' ')}</p>
   <label for={`retained-${editor.blockId}`}>Retained screenplay text</label>
   <textarea id={`retained-${editor.blockId}`} bind:value={draft.text} disabled={busy} rows="6"
   ></textarea>

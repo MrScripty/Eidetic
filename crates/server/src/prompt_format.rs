@@ -30,11 +30,21 @@ pub(crate) fn append_script_context(
         "CANONICAL SCREENPLAY CONTEXT (authored text; world interpretations require review):\n",
     );
     for block in blocks {
+        let kind = block
+            .block_kind
+            .as_ref()
+            .map(|kind| {
+                format!(
+                    " block_type={}",
+                    crate::script_store_codec::encode_block_kind(kind)
+                )
+            })
+            .unwrap_or_default();
         user.push_str(&format!(
-            "--- document={} segment={} block={} block_revision={} segment_revision={} presentation={}..{}ms ---\n{}\n\n",
+            "--- document={} segment={} block={} block_revision={} segment_revision={} presentation={}..{}ms{} ---\n{}\n\n",
             block.document_id.as_str(), block.segment_id.as_str(), block.block_id.as_str(),
             block.revision_event_id.0, block.segment_revision_event_id.0,
-            block.start_ms, block.end_ms, block.text,
+            block.start_ms, block.end_ms, kind, block.text,
         ));
     }
 }

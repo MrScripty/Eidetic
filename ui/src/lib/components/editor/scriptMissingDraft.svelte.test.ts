@@ -73,7 +73,7 @@ function beginMissing() {
   editor.state.text = exact;
   return editor;
 }
-it('copies exact text and original kind into the existing composer only explicitly, retaining original across copy cancellation', () => {
+it('copies exact text and authored kind into the existing composer only explicitly, retaining original across copy cancellation', () => {
   const editor = beginMissing(),
     composer = getSessionScriptBlockCreationDraft();
   expect(copyMissingScriptDraft(editor, composer, null)).toBe(false);
@@ -209,4 +209,38 @@ it('preserves independent drafts, fresh panel consumers and read failures, then 
   expect(other.state.text).toBe('Independent B');
   resetSessionScriptBlockEditDrafts();
   expect(render(ScriptPanel).body).not.toContain('Independent B');
+});
+
+it('preserves an edited block type when a missing saved block is copied into a new screenplay', async () => {
+  const editor = getSessionScriptBlockEditDraft(key.document_id, block.block.id);
+  editor.begin({ ...block, block: { ...block.block, block_kind: 'action' } });
+  editor.state.text = exact;
+  editor.state.kind = 'dialogue';
+  invoke.mockResolvedValueOnce({
+    version: 2,
+    payload: { document: { id: key.document_id, title: 'Story', sort_order: 0 }, segments: [] },
+  });
+  await refreshScriptDocumentProjection(key);
+  const save = vi.fn().mockResolvedValue({});
+  const composer = createScriptBlockCreationDraft({
+    documentId: () => key.document_id,
+    save,
+    newCommandId: () => 'typed.copy.request',
+  });
+  expect(copyMissingScriptDraft(editor, composer, source)).toBe(true);
+  expect(composer.state.kind).toBe('dialogue');
+  expect(render(ScriptPanel).body).toContain('Draft block type: dialogue');
+  await composer.save();
+  expect(save).toHaveBeenCalledWith(
+    expect.objectContaining({
+      text: exact,
+      block_kind: 'dialogue',
+      source_node_id: source.node_id,
+    }),
+    'typed.copy.request',
+  );
+  expect(editor.state.text).toBe(exact);
+  expect(editor.state.kind).toBe('dialogue');
+  expect(editor.state.baseRevision).toBe('original.revision');
+  expect(editor.state.editing).toBe(true);
 });

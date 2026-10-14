@@ -13,6 +13,23 @@
   {#if draft.removal.active}
     <ScriptBlockRemoval {editor} />
   {:else if draft.editing}
+    <label
+      >Block type
+      <select
+        aria-label="Block type"
+        bind:value={draft.kind}
+        disabled={draft.saving || draft.comparing || draft.uncertain}
+      >
+        <option value="action">Action</option>
+        <option value="scene_heading">Scene heading</option>
+        <option value="character">Character</option>
+        <option value="dialogue">Dialogue</option>
+        <option value="parenthetical">Parenthetical</option>
+        <option value="transition">Transition</option>
+        <option value="shot">Shot</option>
+        <option value="note">Note</option>
+      </select>
+    </label>
     <label for={`script-edit-${block.block.id}`}>Edit screenplay text</label>
     <textarea
       id={`script-edit-${block.block.id}`}
@@ -20,7 +37,7 @@
       disabled={draft.saving || draft.comparing || draft.uncertain}
       rows="8"
     ></textarea>
-    {#if block.locks.length}<p>Protected text must remain unchanged.</p>{/if}
+    {#if block.locks.length}<p>Protected text and block type must remain unchanged.</p>{/if}
     {#if draft.error}<p role="alert">{draft.error} Your draft is still here.</p>{/if}
     {#if draft.uncertain}<p>
         The save may have completed. Retry to confirm it before changing this text.
@@ -52,6 +69,7 @@
     {#if draft.comparison}
       <section class="comparison" aria-label="Saved text comparison">
         <strong>Saved text</strong>
+        <p>Saved block type: {draft.comparison.kind.replaceAll('_', ' ')}</p>
         <pre>{draft.comparison.text}</pre>
         {#if block.revision_event_id !== draft.comparison.revisionEventId}
           <p>Saved text changed again. Compare it before continuing.</p>
@@ -69,6 +87,7 @@
       </section>
     {/if}
   {:else}
+    <p aria-label="Saved block type">Block type: {block.block.block_kind.replaceAll('_', ' ')}</p>
     <ScriptView text={block.block.text} />
     <button type="button" onclick={() => editor.begin(block)} disabled={!block.revision_event_id}
       >Edit</button

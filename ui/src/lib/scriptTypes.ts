@@ -17,6 +17,7 @@ export interface ScriptContextBlock {
   start_ms: number;
   end_ms: number;
   text: string;
+  block_kind?: ScriptBlockKind | null;
 }
 
 export interface ScriptDocument {
@@ -160,6 +161,7 @@ export interface EditScriptBlockCommand {
   block_id: ScriptBlockId;
   expected_revision_event_id: string;
   text: string;
+  block_kind?: ScriptBlockKind | null;
 }
 
 export interface ScriptDocumentCommandResponse {
