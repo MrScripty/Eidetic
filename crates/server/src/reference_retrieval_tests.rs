@@ -1,7 +1,7 @@
 use super::{attach_rag_context, attach_rag_embedding};
 use crate::embeddings::{Embedding, EmbeddingClient};
 use crate::project_service::replace_active_project;
-use crate::state::{AppState, constants};
+use crate::state::AppState;
 use eidetic_core::ai::backend::{GenerateRequest, RagChunk};
 use eidetic_core::ai::prompt::build_generate_request;
 use eidetic_core::reference::{ReferenceDocument, ReferenceType, chunk_document};
@@ -11,8 +11,7 @@ use std::sync::Arc;
 
 fn query(state: &AppState) -> Embedding {
     Embedding::new(
-        EmbeddingClient::new(&state.ai_config.lock().base_url, constants::EMBEDDING_MODEL)
-            .identity(),
+        EmbeddingClient::new(&state.ai_config.lock().embedding.base_url, "model").identity(),
         vec![1.0],
     )
     .unwrap()
@@ -44,6 +43,13 @@ fn request_with_old_context(project: &Project) -> GenerateRequest {
 
 async fn fixture() -> (AppState, Project, PathBuf) {
     let state = AppState::new().await;
+    state.ai_config.lock().embedding = crate::embeddings::EmbeddingConfig {
+        provider: crate::embeddings::EmbeddingProvider::OpenAiCompatible,
+        base_url: "http://localhost:18080/v1".into(),
+        model: "model".into(),
+        revision: "fixture".into(),
+        ..Default::default()
+    };
     let source = ReferenceDocument::new("Notes", "Original", ReferenceType::StyleGuide);
     let mut project = Template::MultiCam.build_project("Retrieval");
     project.references.push(source.clone());
@@ -98,7 +104,7 @@ async fn changed_config_path_or_missing_project_clears_preexisting_context() {
     let scope = state.vector_store.lock().scope();
     let completed_query = query(&state);
     let config = state.ai_config.lock().clone();
-    state.ai_config.lock().base_url = "http://localhost:18081/v1".into();
+    state.ai_config.lock().embedding.base_url = "http://localhost:18081/v1".into();
     let mut request = request_with_old_context(&project);
     attach_rag_embedding(&state, &path, scope, &completed_query, &mut request);
     assert!(request.rag_context.is_empty());
@@ -117,4 +123,83 @@ async fn changed_config_path_or_missing_project_clears_preexisting_context() {
     attach_rag_embedding(&state, &path, scope, &completed_query, &mut request);
     assert!(request.rag_context.is_empty());
     state.shutdown_tasks();
+}
+
+async fn late_query_preserves_new_index_status(reopen: bool) {
+    use crate::pumas_inference::tests::{Fixture, ready};
+    let producer = Fixture::start().await;
+    let (state, project, path) = fixture().await;
+    state.ai_config.lock().embedding = producer.embedding_config();
+    crate::reference_service::schedule_reindex(&state);
+    ready(&state).await;
+    let origin = state.vector_store.lock().scope();
+    let config = state.ai_config.lock().embedding.clone();
+    let delayed_query = EmbeddingClient::from_config(&config)
+        .await
+        .unwrap()
+        .embed("Original query")
+        .await
+        .unwrap();
+
+    // Pumas load revision can change while configuration stays exactly the same.
+    // Rebuild with a new revision AND dimensions before delivering the old query.
+    producer.change_embedding_representation(2, 4);
+    if reopen {
+        replace_active_project(&state, project.clone(), path.clone());
+    } else {
+        crate::reference_service::schedule_reindex(&state);
+    }
+    ready(&state).await;
+    let current = state.vector_store.lock().scope();
+    assert_ne!(origin, current);
+    let before = crate::reference_service::index_status(&state).unwrap();
+    assert_eq!(before.documents[0].state, "ready");
+    assert_eq!(before.documents[0].dimensions, Some(4));
+    assert!(
+        before.documents[0]
+            .revision
+            .as_ref()
+            .unwrap()
+            .contains("weights-2")
+    );
+    assert!(delayed_query.matches_config(&config));
+
+    let mut request = request_with_old_context(&project);
+    attach_rag_embedding(&state, &path, origin, &delayed_query, &mut request);
+    assert!(request.rag_context.is_empty());
+    let after = crate::reference_service::index_status(&state).unwrap();
+    assert_eq!(
+        serde_json::to_value(after).unwrap(),
+        serde_json::to_value(before).unwrap()
+    );
+
+    let fresh_query = EmbeddingClient::from_config(&config)
+        .await
+        .unwrap()
+        .embed("Current query")
+        .await
+        .unwrap();
+    attach_rag_embedding(&state, &path, current, &fresh_query, &mut request);
+    assert_eq!(
+        request.rag_context[0].content,
+        project.references[0].content
+    );
+    assert_eq!(
+        crate::reference_service::index_status(&state)
+            .unwrap()
+            .documents[0]
+            .state,
+        "ready"
+    );
+    state.shutdown_tasks_async().await;
+}
+
+#[tokio::test]
+async fn late_query_cannot_mark_reindexed_reference_stale() {
+    late_query_preserves_new_index_status(false).await;
+}
+
+#[tokio::test]
+async fn late_query_cannot_mark_same_path_reopened_reference_stale() {
+    late_query_preserves_new_index_status(true).await;
 }

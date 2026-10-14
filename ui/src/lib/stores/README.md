@@ -294,3 +294,9 @@ Session-owner registration runs untracked because block components obtain it thr
 
 `timelineTitleSession` owns transient clip title intents in the current editor
 session; live projection refresh never silently rebases an authored pending title.
+
+`serverEventHandlers.ts` displays `reference_retrieval` results through the existing
+notification store: consumed source names on success, or the backend's retrieval
+error before generation continues without reference context. The existing
+`generation_context` handler retains the exact prompt for inspection. Upload or
+index scheduling acknowledgements never become retrieval-success notifications.

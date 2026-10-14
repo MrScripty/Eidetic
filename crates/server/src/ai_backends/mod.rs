@@ -1,5 +1,6 @@
 pub(crate) mod llamacpp;
 pub(crate) mod openrouter;
+mod pumas;
 mod sse;
 
 use serde::Serialize;
@@ -13,11 +14,13 @@ use eidetic_core::error::Error;
 pub(crate) enum Backend {
     LlamaCpp(llamacpp::LlamaCppBackend),
     OpenRouter(openrouter::OpenRouterBackend),
+    Pumas(pumas::PumasBackend),
 }
 
 impl Backend {
     pub fn from_config(config: &AiConfig) -> Self {
         match config.backend_type {
+            BackendType::Pumas => Backend::Pumas(pumas::PumasBackend::new(config)),
             BackendType::LlamaCpp => Backend::LlamaCpp(llamacpp::LlamaCppBackend::new(config)),
             BackendType::OpenRouter => {
                 Backend::OpenRouter(openrouter::OpenRouterBackend::new(config))
@@ -33,6 +36,7 @@ impl Backend {
         match self {
             Backend::LlamaCpp(b) => b.generate(prompt, config).await,
             Backend::OpenRouter(b) => b.generate(prompt, config).await,
+            Backend::Pumas(b) => b.generate(prompt, config).await,
         }
     }
 
@@ -61,6 +65,7 @@ impl Backend {
         match self {
             Backend::LlamaCpp(b) => b.generate_json(prompt, config).await,
             Backend::OpenRouter(b) => b.generate_json(prompt, config).await,
+            Backend::Pumas(b) => b.generate_json(prompt, config).await,
         }
     }
 
@@ -68,6 +73,7 @@ impl Backend {
         match self {
             Backend::LlamaCpp(b) => b.health_check().await,
             Backend::OpenRouter(b) => b.health_check().await,
+            Backend::Pumas(b) => b.health_check().await,
         }
     }
 }

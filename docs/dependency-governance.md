@@ -50,7 +50,7 @@ EIDETIC_FETCH_PUMAS=1 scripts/prepare-pumas-dependency.sh
 Default source contract:
 
 - Repository: `https://github.com/MrScripty/Pumas-Library.git`
-- Revision: `8444b50df28c3e2bd8db58fb3645fa4dd8664b27`
+- Revision: `ad31e391dcd94c204b3fcd748cc98d27b3281e65`
 - Required package: `pumas-library`
 - Required local path: `../../ai-systems/Pumas-Library/rust/crates/pumas-core`
 
@@ -68,9 +68,35 @@ private mirror or an already provisioned checkout.
 - Pumas remains a path dependency until the sibling repository has an agreed
   publication or git-dependency contract. CI must provision the exact expected
   checkout before running Cargo.
-- npm currently reports low-severity `cookie <0.7.0` advisories through
-  `@sveltejs/kit`. The compatible `npm audit fix` path has already been applied;
-  npm's remaining `--force` suggestion would install `@sveltejs/kit@0.0.30`, so
-  it is rejected as a breaking downgrade. The dependency gate blocks
-  high/critical npm advisories and leaves this low advisory tracked here until a
-  compatible SvelteKit release resolves it.
+- `cookie 0.6.0` remains a low-severity finding through SvelteKit's declared
+  `^0.6.0` dependency. The static desktop deployment has no Node HTTP cookie
+  serializer or server load/form endpoints; application input does not supply
+  cookie names, paths or domains. Do not override the producer's dependency
+  contract to make the audit count disappear. The frontend dependency owner must
+  select a supported parent update before adding server-side cookie handling or
+  accepting untrusted cookie metadata. See the exact finding and follow-up in
+  [PR29's dependency audit](reports/pr29-dependency-audit.md).
+
+The 2026-10-14 PR29 audit repair maps all 14 high and 3 critical baseline rows to
+their actual consumers and upstream advisories. It uses same-family patches,
+SvelteKit 2.70.3 for a reachable development-server header issue, and a coordinated
+Vitest/coverage 4.1.11 update that removes vulnerable Tinypool 1.x. Node remains
+24.12.0 and Vite remains on 6.x; no forced transitive major overrides are used.
+The CI frontend job now runs the existing high/critical audit policy and the
+static build in addition to lint, typechecking and tests. Runtime-capable Svelte
+dependencies are reviewed even though this app's manifest labels them as dev
+dependencies. Audit counts include inherited parent rows; `fixAvailable: false`
+does not prove that upstream has no patched release.
+
+The current local-inference consumer uses Pumas 0.8.0-rc.1's HTTP advertisement /
+admission-fence schema 1, typed model-operation contract 1 and serving RPC DTOs.
+The `ad31e391` pin is intentional when integrating main `59793c19`: main's
+`a94fd920` setup revision is Pumas 0.7.0 and does not expose the discovery module
+or typed `/v1/model-operations` contract required by this consumer. The older
+`8444b50d` documentation revision is also superseded. Keep the preparation script,
+this source contract and the lockfile on the same tested producer revision;
+native UI acceptance from PR30 does not qualify model inference.
+Build `pumas-rpc` with its default `inference-plugins` feature; an inference-disabled
+binary is explicitly refused. The path dependency and `Cargo.lock` package version
+match the setup pin. See [local acceptance](pumas-local-inference.md) for runtime
+setup; no application model is downloaded during build or test.
