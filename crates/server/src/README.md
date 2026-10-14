@@ -158,6 +158,8 @@ increase coupling by hiding the transaction invariant.
 - Splitting `affect_store.rs` solely by size: rejected because the current
   coupling is a transaction/revision invariant rather than unrelated ownership.
 
+Saved-project listings read modification metadata from project.db, so editing an existing project updates the displayed time even when its directory is unchanged. Timestamps remain decimal Unix seconds.
+
 ## Invariants
 
 - Child-plan list projections recover existing durable canonical proposals and
@@ -313,8 +315,12 @@ increase coupling by hiding the transaction invariant.
 - Only nonempty finite nonzero vectors with matching configured endpoint/model
   and dimension are ranked. Returned HTTP model identity must match the request.
   Pumas embeddings now bind producer instance/service generation, provider,
-  selected profile/model, load timestamp and actual library metadata, including
+  selected profile/model, monotonic serving cursor, optional load timestamp and actual library metadata, including
   upstream revision when present. Dimension mismatch excludes candidates.
+  The pinned producer omits load timestamps; its service-scoped cursor fences
+  same-model reloads with unchanged metadata. Any serving mutation, including an
+  unrelated chat load, conservatively requires reindexing. Before/after inference
+  observations reject an operation that crosses a serving-state change.
   This is session/provenance identity, not an immutable weight attestation;
   out-of-band file mutation without metadata/reload is outside the producer's
   current contract. Saved sources rebuild on reopen; failed/stale/indexing states

@@ -53,7 +53,10 @@ impl Embedding {
                 value["metadata"]["effective_metadata"]["upstream_revision"]
                     .as_str()
                     .unwrap_or("local package metadata"),
-                value["loaded_at"].as_str().unwrap_or("unknown load")
+                value["serving_cursor"]
+                    .as_str()
+                    .or_else(|| value["loaded_at"].as_str())
+                    .unwrap_or("unknown load")
             ),
             Err(_) => self.identity.revision.clone(),
         }

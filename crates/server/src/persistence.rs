@@ -843,8 +843,7 @@ pub async fn list_projects(base_dir: &Path) -> Vec<ProjectEntry> {
             continue;
         }
 
-        let modified = entry
-            .metadata()
+        let modified = fs::metadata(&project_file)
             .await
             .ok()
             .and_then(|m| m.modified().ok())
@@ -884,6 +883,23 @@ mod tests {
     use uuid::Uuid;
 
     use super::{load_project_sync, save_project_sync};
+
+    #[tokio::test]
+    async fn project_list_uses_saved_database_modification_time() {
+        use std::time::{Duration, UNIX_EPOCH};
+        let root = std::env::temp_dir().join(format!("eidetic-project-list-{}", Uuid::new_v4()));
+        let directory = root.join("Demo");
+        std::fs::create_dir_all(&directory).unwrap();
+        let database = std::fs::File::create(directory.join("project.db")).unwrap();
+        database
+            .set_modified(UNIX_EPOCH + Duration::from_secs(1_700_000_000))
+            .unwrap();
+
+        let entries = super::list_projects(&root).await;
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].modified, "1700000000");
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn temp_project_path(label: &str) -> std::path::PathBuf {
         std::env::temp_dir().join(format!("eidetic-persistence-{label}-{}.db", Uuid::new_v4()))

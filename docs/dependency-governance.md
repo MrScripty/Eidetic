@@ -77,6 +77,12 @@ private mirror or an already provisioned checkout.
 
 The current local-inference consumer uses Pumas 0.8.0-rc.1's HTTP advertisement /
 admission-fence schema 1, typed model-operation contract 1 and serving RPC DTOs.
+The `ad31e391` pin is intentional when integrating main `59793c19`: main's
+`a94fd920` setup revision is Pumas 0.7.0 and does not expose the discovery module
+or typed `/v1/model-operations` contract required by this consumer. The older
+`8444b50d` documentation revision is also superseded. Keep the preparation script,
+this source contract and the lockfile on the same tested producer revision;
+native UI acceptance from PR30 does not qualify model inference.
 Build `pumas-rpc` with its default `inference-plugins` feature; an inference-disabled
 binary is explicitly refused. The path dependency and `Cargo.lock` package version
 match the setup pin. See [local acceptance](pumas-local-inference.md) for runtime

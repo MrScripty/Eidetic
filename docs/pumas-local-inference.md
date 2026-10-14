@@ -1,10 +1,17 @@
 # Local inference through Pumas
 
-Eidetic uses Pumas main `ad31e391dcd94c204b3fcd748cc98d27b3281e65`
+Eidetic pins Pumas `ad31e391dcd94c204b3fcd748cc98d27b3281e65`
 (0.8.0-rc.1). Chat and reference embeddings are independent selections. Production
 requests use real Pumas providers through its serving lifecycle and typed HTTP
 model-operation contract; no fake embeddings, cloud substitution or model
 download is used as a fallback.
+
+This exact pin is retained after integrating main `59793c19`; its older Pumas
+setup pin predates discovery and typed model operations. See
+[dependency governance](dependency-governance.md) for the compatibility decision.
+PR30's native UI acceptance and green source CI do not satisfy the trained-model
+acceptance below. PR29 remains draft until parent review and that runtime gate
+are explicitly dispositioned.
 
 ## Prepare
 
@@ -88,8 +95,11 @@ reference text is SQLite project content and is never discarded by index failure
 5. Change the embedding model/profile and save. The previous index is invalidated
    before new publication. Reload the same Pumas model at a new revision: retrieval
    refuses the old index and shows **stale**; reindex it before expecting retrieval.
-   A changed vector dimension also excludes old candidates. Delete a reference
-   while indexing and reopen during indexing; obsolete results cannot publish.
+   Serving-state changes, including unrelated chat loads/unloads, conservatively
+   invalidate existing embeddings; load both models before indexing and Reindex
+   after any serving change. A changed vector dimension also excludes old
+   candidates. Delete a reference while indexing and reopen during indexing;
+   obsolete results cannot publish.
 6. Unload embeddings and generate: reference retrieval must report unavailable;
    ordinary chat generation may continue, and it must not claim references were
    consumed. Unload chat and generate: generation must fail visibly. Try an
@@ -103,8 +113,9 @@ reference text is SQLite project content and is never discarded by index failure
 
 The disposable index binds exact document content/name/type/id and source ticket,
 project epoch, embedding provider/endpoint/model/profile, Pumas instance/service
-generations, selected load timestamp and actual library metadata (including
-upstream revision if available), plus matching vector dimensions. All chunks of a
+generations, the monotonic serving-state cursor, optional load timestamp and actual
+library metadata (including upstream revision if available), plus matching vector
+dimensions. All chunks of a
 document publish together after successful embedding. Deleted sources, project
 replacement and embedding-selection changes invalidate outstanding tickets.
 Generation rechecks scope/config and current source at attachment.
@@ -112,11 +123,15 @@ The captured scope is checked before changing index compatibility/status, so a
 late query from an earlier index cannot mark a rebuilt reference stale.
 
 Pumas typed v1 returns vectors but no immutable package-weight revision in each
-operation response. Eidetic observes provenance/load identity before and after
-embedding. This prevents mixing observed reloads/revisions; it cannot prove that
-weights were not mutated out of band without metadata/reload, or detect an
-unobserved producer ABA within a single inference call. Do not edit loaded model
-files in place; reload and reindex. A stronger producer-issued immutable revision
+operation response. Its serving adapters omit the optional load timestamp.
+Eidetic observes provenance and the service-scoped serving cursor before and after
+embedding. Reloads, including same-model reloads with unchanged metadata, advance
+that cursor. Unrelated serving changes also require reindexing; this conservative
+invalidation avoids inventing per-model load identity. It prevents mixing observed
+reloads/revisions; it cannot prove that weights were not mutated out of band without
+metadata or a serving-cursor change, including a provider/package ABA outside
+Pumas's serving lifecycle. Do not edit loaded model files in place; reload and
+reindex. A stronger producer-issued immutable revision
 would require a coordinated Pumas contract change; none is introduced here.
 
 ## Automated evidence

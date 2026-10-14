@@ -133,7 +133,7 @@ impl PumasClient {
         model: &str,
         profile: &str,
         capability: &str,
-    ) -> Result<ServedModelStatus, String> {
+    ) -> Result<(ServedModelStatus, String), String> {
         if model.trim().is_empty()
             || model.eq_ignore_ascii_case("auto")
             || profile.trim().is_empty()
@@ -143,6 +143,9 @@ impl PumasClient {
         let status: ServingStatusResponse =
             serde_json::from_value(self.rpc("get_serving_status", json!({})).await?)
                 .map_err(|e| format!("Pumas serving status: {e}"))?;
+        if status.snapshot.schema_version != 1 || status.snapshot.cursor.is_empty() {
+            return Err("Pumas serving snapshot schema/cursor mismatch".into());
+        }
         let served = status
             .snapshot
             .served_models
@@ -180,7 +183,7 @@ impl PumasClient {
                 value["capabilities"]
             ));
         }
-        Ok(served)
+        Ok((served, status.snapshot.cursor))
     }
 
     /// Session revision includes actual Pumas provenance and the selected load.
@@ -190,18 +193,18 @@ impl PumasClient {
         model: &str,
         profile: &str,
     ) -> Result<String, String> {
-        let status = self.selected(model, profile, "text_embedding").await?;
+        let (status, serving_cursor) = self.selected(model, profile, "text_embedding").await?;
         let metadata = self
             .rpc("get_library_model_metadata", json!({"model_id":model}))
             .await?;
         if metadata["model_id"] != model {
             return Err("Pumas metadata model mismatch".into());
         }
-        let loaded_at = status
-            .loaded_at
-            .ok_or("Pumas embedding load is missing revision timestamp")?;
+        // The pinned adapters leave loaded_at unset. The producer's monotonic
+        // serving cursor fences even same-model unload/reload with unchanged
+        // metadata. It conservatively invalidates on unrelated serving changes.
         Ok(json!({"service":self.description.service_generation, "instance":self.description.instance.generation,
-            "provider":status.provider, "profile":profile, "loaded_at":loaded_at,
+            "provider":status.provider, "profile":profile, "serving_cursor":serving_cursor, "loaded_at":status.loaded_at,
             "metadata": metadata}).to_string())
     }
 

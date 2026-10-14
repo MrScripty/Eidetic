@@ -19,6 +19,8 @@ pub(crate) struct Fixture {
     pub(crate) url: String,
     pub(crate) requests: Arc<Mutex<Vec<(String, Value)>>>,
     revision: Arc<AtomicUsize>,
+    serving_cursor: Arc<AtomicUsize>,
+    change_cursor_during_embedding: Arc<AtomicBool>,
     dimensions: Arc<AtomicUsize>,
     unload_response: Arc<Mutex<Option<Value>>>,
     fail_embedding: Arc<AtomicBool>,
@@ -37,15 +39,19 @@ impl Fixture {
         let url = format!("http://{}", listener.local_addr().unwrap());
         let requests = Arc::new(Mutex::new(Vec::new()));
         let revision = Arc::new(AtomicUsize::new(1));
+        let serving_cursor = Arc::new(AtomicUsize::new(1));
+        let change_cursor_during_embedding = Arc::new(AtomicBool::new(false));
         let dimensions = Arc::new(AtomicUsize::new(3));
         let unload_response = Arc::new(Mutex::new(None::<Value>));
         let fail_embedding = Arc::new(AtomicBool::new(false));
         let unavailable = Arc::new(AtomicBool::new(false));
         let loaded = Arc::new(AtomicBool::new(true));
-        let (root_url, reqs, rev, dims, unload, fail, unavail, is_loaded) = (
+        let (root_url, reqs, rev, cursor, change_cursor, dims, unload, fail, unavail, is_loaded) = (
             url.clone(),
             requests.clone(),
             revision.clone(),
+            serving_cursor.clone(),
+            change_cursor_during_embedding.clone(),
             dimensions.clone(),
             unload_response.clone(),
             fail_embedding.clone(),
@@ -55,10 +61,12 @@ impl Fixture {
         let task = tokio::spawn(async move {
             loop {
                 let (mut socket, _) = listener.accept().await.unwrap();
-                let (url, reqs, rev, dims, unload, fail, unavail, is_loaded) = (
+                let (url, reqs, rev, cursor, change_cursor, dims, unload, fail, unavail, is_loaded) = (
                     root_url.clone(),
                     reqs.clone(),
                     rev.clone(),
+                    cursor.clone(),
+                    change_cursor.clone(),
                     dims.clone(),
                     unload.clone(),
                     fail.clone(),
@@ -124,7 +132,7 @@ impl Fixture {
                     } else if path == "/rpc" {
                         let result = match body["method"].as_str().unwrap() {
                             "get_serving_status" => {
-                                json!({"success":true,"snapshot":{"schema_version":1,"cursor":"serving:1","endpoint":{"endpoint_mode":"pumas_gateway","model_count":2},"last_errors":[],"served_models":if is_loaded.load(Ordering::SeqCst) {vec![served("embed",rev.load(Ordering::SeqCst)),served("chat",1)]} else {vec![]}}})
+                                json!({"success":true,"snapshot":{"schema_version":1,"cursor":format!("serving:{}",cursor.load(Ordering::SeqCst)),"endpoint":{"endpoint_mode":"pumas_gateway","model_count":2},"last_errors":[],"served_models":if is_loaded.load(Ordering::SeqCst) {vec![served("embed"),served("chat")]} else {vec![]}}})
                             }
                             "get_library_model_metadata" => {
                                 json!({"success":true,"model_id":body["params"]["model_id"],"effective_metadata":{"upstream_revision":format!("weights-{}",rev.load(Ordering::SeqCst))}})
@@ -134,6 +142,7 @@ impl Fixture {
                             }
                             "serve_model" => {
                                 is_loaded.store(true, Ordering::SeqCst);
+                                cursor.fetch_add(1, Ordering::SeqCst);
                                 json!({"success":true,"loaded":true})
                             }
                             "unserve_model" if unload.lock().is_some() => {
@@ -141,6 +150,7 @@ impl Fixture {
                             }
                             "unserve_model" => {
                                 is_loaded.store(false, Ordering::SeqCst);
+                                cursor.fetch_add(1, Ordering::SeqCst);
                                 json!({"success":true,"unloaded":true})
                             }
                             "shutdown" => json!({"success":true}),
@@ -149,6 +159,9 @@ impl Fixture {
                         json!({"jsonrpc":"2.0","id":body["id"],"result":result})
                     } else if path == "/v1/model-operations" {
                         if body["capability"] == "text_embedding" {
+                            if change_cursor.swap(false, Ordering::SeqCst) {
+                                cursor.fetch_add(1, Ordering::SeqCst);
+                            }
                             if fail.load(Ordering::SeqCst) {
                                 json!({"contract_version":1,"request_id":body["request_id"],"error":{"code":"provider_failure","outcome":"not_admitted"}})
                             } else {
@@ -190,6 +203,8 @@ impl Fixture {
             url,
             requests,
             revision,
+            serving_cursor,
+            change_cursor_during_embedding,
             dimensions,
             unload_response,
             fail_embedding,
@@ -211,6 +226,7 @@ impl Fixture {
     pub(crate) fn change_embedding_representation(&self, revision: usize, dimensions: usize) {
         self.revision.store(revision, Ordering::SeqCst);
         self.dimensions.store(dimensions, Ordering::SeqCst);
+        self.serving_cursor.fetch_add(1, Ordering::SeqCst);
     }
 }
 pub(crate) fn description(url: &str) -> Value {
@@ -218,8 +234,153 @@ pub(crate) fn description(url: &str) -> Value {
         "instance":{"discovery_schema_version":1,"registry_library_id":"fixture","library_root":"/tmp/fixture","generation":"instance-fixture","pumas_version":"0.8.0-rc.1","protocols":[],"capabilities":[],"model_ref_schema_version":1,"selector_schema_version":1},
         "build_info":{"build_info_schema_version":1,"component":"pumas-rpc","package_version":"0.8.0-rc.1","compiled_features":["pumas-rpc/inference-plugins"],"protocols":[],"schemas":[{"name":"pumas.http-admission-fence","version":1}]}})
 }
-fn served(model: &str, revision: usize) -> Value {
-    json!({"model_id":model,"provider":"onnx_runtime","profile_id":"fixture","load_state":"loaded","device_mode":"cpu","keep_loaded":true,"loaded_at":format!("load-{revision}")})
+fn served(model: &str) -> Value {
+    // The pinned producer's real serving adapters omit the optional timestamp.
+    json!({"model_id":model,"provider":"onnx_runtime","profile_id":"fixture","load_state":"loaded","device_mode":"cpu","keep_loaded":true})
+}
+
+#[tokio::test]
+async fn pumas_producer_without_load_timestamp_can_embed() {
+    let fixture = Fixture::start().await;
+    let client = EmbeddingClient::from_config(&fixture.embedding_config())
+        .await
+        .expect("pinned producer does not provide loaded_at");
+    assert_eq!(
+        client.embed("Reference").await.unwrap().values,
+        vec![1., 2., 3.]
+    );
+}
+
+#[tokio::test]
+async fn pumas_serving_cursor_fences_same_model_reload_and_unrelated_serving_changes() {
+    use eidetic_core::{Template, ai::prompt::build_generate_request};
+    let fixture = Fixture::start().await;
+    let state = AppState::new().await;
+    state.ai_config.lock().embedding = fixture.embedding_config();
+    let project = Template::MultiCam.build_project("Cursor fixture");
+    let path = std::env::temp_dir().join(format!("eidetic-cursor-{}.db", Uuid::new_v4()));
+    let mut request = build_generate_request(&project, project.timeline.nodes[0].id).unwrap();
+    crate::project_service::replace_active_project(&state, project, path.clone());
+    crate::reference_service::upload_reference(
+        &state,
+        crate::reference_service::UploadReferenceRequest {
+            name: "Reference".into(),
+            content: "Unique reference detail".into(),
+            doc_type: "StyleGuide".into(),
+        },
+    )
+    .unwrap();
+    ready(&state).await;
+    let config = state.ai_config.lock().clone();
+    let old_client = EmbeddingClient::from_config(&config.embedding)
+        .await
+        .unwrap();
+    let producer = PumasClient::connect(&fixture.url).await.unwrap();
+    // Same model, provider, profile, dimensions and package metadata; only the
+    // real producer's serving cursor distinguishes this unload/reload.
+    let metadata = producer
+        .rpc("get_library_model_metadata", json!({"model_id":"embed"}))
+        .await
+        .unwrap();
+    producer
+        .rpc("unserve_model", json!({"request":{"model_id":"embed"}}))
+        .await
+        .unwrap();
+    producer
+        .rpc("serve_model", json!({"request":{"model_id":"embed"}}))
+        .await
+        .unwrap();
+    assert_eq!(
+        metadata,
+        producer
+            .rpc("get_library_model_metadata", json!({"model_id":"embed"}))
+            .await
+            .unwrap()
+    );
+    assert!(
+        old_client
+            .embed("Query")
+            .await
+            .unwrap_err()
+            .contains("revision changed")
+    );
+    let scope = state.vector_store.lock().scope();
+    crate::ai_generation_runtime::attach_rag_context(&state, &config, &path, scope, &mut request)
+        .await;
+    assert!(request.rag_context.is_empty());
+    assert_eq!(
+        crate::reference_service::index_status(&state)
+            .unwrap()
+            .documents[0]
+            .state,
+        "stale"
+    );
+    crate::reference_service::schedule_reindex(&state);
+    ready(&state).await;
+    let scope = state.vector_store.lock().scope();
+    crate::ai_generation_runtime::attach_rag_context(&state, &config, &path, scope, &mut request)
+        .await;
+    assert_eq!(request.rag_context.len(), 1);
+    // An unrelated serving mutation is intentionally conservative too.
+    producer
+        .rpc("serve_model", json!({"request":{"model_id":"chat"}}))
+        .await
+        .unwrap();
+    crate::ai_generation_runtime::attach_rag_context(&state, &config, &path, scope, &mut request)
+        .await;
+    assert!(request.rag_context.is_empty());
+    assert_eq!(
+        crate::reference_service::index_status(&state)
+            .unwrap()
+            .documents[0]
+            .state,
+        "stale"
+    );
+    state.shutdown_tasks_async().await;
+    if path.exists() {
+        std::fs::remove_file(path).unwrap();
+    }
+}
+
+#[tokio::test]
+async fn pumas_serving_change_during_embedding_fails_without_publishing_chunks() {
+    let fixture = Fixture::start().await;
+    fixture
+        .change_cursor_during_embedding
+        .store(true, Ordering::SeqCst);
+    let state = AppState::new().await;
+    state.ai_config.lock().embedding = fixture.embedding_config();
+    *state.project.lock() = Some(eidetic_core::Template::MultiCam.build_project("Cursor change"));
+    crate::reference_service::upload_reference(
+        &state,
+        crate::reference_service::UploadReferenceRequest {
+            name: "Reference".into(),
+            content: "Reference content".into(),
+            doc_type: "StyleGuide".into(),
+        },
+    )
+    .unwrap();
+    tokio::time::timeout(Duration::from_secs(10), async {
+        loop {
+            let status = crate::reference_service::index_status(&state).unwrap();
+            if status.documents[0].state == "failed" {
+                assert!(
+                    status.documents[0]
+                        .error
+                        .as_ref()
+                        .unwrap()
+                        .contains("changed during inference")
+                );
+                assert_eq!(status.documents[0].indexed_chunks, 0);
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    assert!(state.vector_store.lock().is_empty());
+    state.shutdown_tasks_async().await;
 }
 
 #[tokio::test]
