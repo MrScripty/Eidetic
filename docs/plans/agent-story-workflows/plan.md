@@ -1212,3 +1212,16 @@ history and downstream review; copying neither writes nor retires the original.
 See [missing-screenplay-draft-recovery.md](missing-screenplay-draft-recovery.md).
 No project-switch, block-type duplication, new store/schema, Pumas identity
 mapping, hosted job or main merge scope.
+
+### Saved screenplay block types (separate successor)
+
+Admitted from frozen title D20 on feat/screenplay-block-type-memory. Creation
+already exposes type, but the guarded saved-block Edit accepts only text and
+screenplay prompt receipts omit type. The pre-implementation wire regression
+fails against D20. Extend that existing Edit with optional type, exact history,
+draft/immutable retry/comparison ownership, owned type receipts and visible
+original/current downstream evidence. Preserve text/spans on type-only saves;
+late locks and stale/ABA edits refuse without writes. Existing preview and
+explicit acceptance remain the downstream replacement authority. Legacy missing
+type history stays unknown, without backfill. See screenplay-block-type-memory-audit.md;
+independent review and source-bound native qualification remain required.

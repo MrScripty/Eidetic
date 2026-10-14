@@ -40,6 +40,7 @@ fn edit(
         .find(|candidate| candidate.block.id == *block)
         .unwrap();
     CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         document_id,
         block_id: block.clone(),
         expected_revision_event_id: current.revision_event_id.unwrap(),
@@ -50,6 +51,118 @@ fn edit(
 fn commands(conn: &Connection) -> i64 {
     conn.query_row("SELECT COUNT(*) FROM commands", [], |row| row.get(0))
         .unwrap()
+}
+
+#[test]
+fn type_only_edit_preserves_exact_text_spans_and_placement_with_owned_old_new_history() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let node = NodeId::new();
+    let exact = "  Exact authored line — 雨.\n\n  ";
+    let block = seed(&mut conn, node, 0, exact);
+    let mut command = edit(&conn, &block, exact);
+    let before = projection(&conn, &command).unwrap();
+    command.payload.block_kind = Some(ScriptBlockKind::Dialogue);
+    let (_, after) = apply_edit_script_block(&mut conn, &command, 20).unwrap();
+    let old = &before.payload.segments[0];
+    let new = &after.payload.segments[0];
+    assert_eq!(new.segment, old.segment);
+    assert_eq!(new.blocks[0].block.text, exact);
+    assert_eq!(
+        new.blocks[0].block.sort_order,
+        old.blocks[0].block.sort_order
+    );
+    assert_eq!(new.blocks[0].spans, old.blocks[0].spans);
+    assert_eq!(new.blocks[0].locks, old.blocks[0].locks);
+    assert_eq!(new.blocks[0].block.block_kind, ScriptBlockKind::Dialogue);
+    let delta: (String,String) = conn.query_row("SELECT f.old_text,f.new_text FROM object_revisions r JOIN object_revision_fields f ON f.revision_id=r.id JOIN change_events e ON e.id=r.change_event_id WHERE e.command_id=?1 AND f.field_key='block_kind'", [command.id.0.to_string()], |row| Ok((row.get(0)?,row.get(1)?))).unwrap();
+    assert_eq!(delta, ("action".into(), "dialogue".into()));
+    let captured = crate::ai_script_context::load_script_context(&conn, node, 0, 1000).unwrap();
+    assert_eq!(captured[0].block_kind, Some(ScriptBlockKind::Dialogue));
+    let mut prompt = String::new();
+    crate::prompt_format::append_script_context(&mut prompt, &captured);
+    assert!(prompt.contains("block_type=dialogue"));
+    assert!(prompt.contains(exact));
+    assert_eq!(
+        apply_edit_script_block(&mut conn, &command, 30).unwrap().0,
+        RecordChangeOutcome::AlreadyRecorded
+    );
+    assert_eq!(projection(&conn, &command).unwrap(), after);
+}
+
+#[test]
+fn type_change_aba_and_a_late_lock_refuse_without_partial_history_or_span_changes() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let block = seed(&mut conn, NodeId::new(), 0, "Exact protected text");
+    let mut stale = edit(&conn, &block, "Exact protected text");
+    stale.payload.block_kind = Some(ScriptBlockKind::Character);
+    let mut first = edit(&conn, &block, "Exact protected text");
+    first.payload.block_kind = Some(ScriptBlockKind::Dialogue);
+    apply_edit_script_block(&mut conn, &first, 20).unwrap();
+    let mut restored = edit(&conn, &block, "Exact protected text");
+    restored.payload.block_kind = Some(ScriptBlockKind::Action);
+    apply_edit_script_block(&mut conn, &restored, 30).unwrap();
+    let before = projection(&conn, &stale).unwrap();
+    let count = commands(&conn);
+    assert!(
+        apply_edit_script_block(&mut conn, &stale, 40)
+            .unwrap_err()
+            .to_string()
+            .contains("changed")
+    );
+    assert_eq!(projection(&conn, &stale).unwrap(), before);
+    assert_eq!(commands(&conn), count);
+    assert_eq!(
+        apply_edit_script_block(&mut conn, &first, 50).unwrap().0,
+        RecordChangeOutcome::AlreadyRecorded
+    );
+    assert_eq!(projection(&conn, &stale).unwrap(), before);
+    let mut fresh = edit(&conn, &block, "Exact protected text");
+    fresh.payload.block_kind = Some(ScriptBlockKind::Dialogue);
+    script_document_command::apply_set_script_lock(
+        &mut conn,
+        &CommandEnvelope::new(SetScriptLockCommand {
+            lock_id: ScriptLockId::new("type.lock").unwrap(),
+            span_id: ScriptSpanId::new(format!("{}.span.main", block.as_str())).unwrap(),
+            reason: "Protected after type read".into(),
+        }),
+        60,
+    )
+    .unwrap();
+    let before = projection(&conn, &fresh).unwrap();
+    let count = commands(&conn);
+    assert!(
+        apply_edit_script_block(&mut conn, &fresh, 70)
+            .unwrap_err()
+            .to_string()
+            .contains("cannot change the type of a locked")
+    );
+    assert_eq!(projection(&conn, &fresh).unwrap(), before);
+    assert_eq!(commands(&conn), count);
+}
+
+#[test]
+fn legacy_missing_type_history_stays_unknown_until_an_explicit_owned_write() {
+    let mut conn = Connection::open_in_memory().unwrap();
+    let node = NodeId::new();
+    let block = seed(&mut conn, node, 0, "Legacy exact text");
+    conn.execute(
+        "DELETE FROM object_revision_fields WHERE field_key='block_kind'",
+        [],
+    )
+    .unwrap();
+    let unknown = crate::ai_script_context::load_script_context(&conn, node, 0, 1000).unwrap();
+    assert_eq!(unknown[0].block_kind, None);
+    let mut prompt = String::new();
+    crate::prompt_format::append_script_context(&mut prompt, &unknown);
+    assert!(!prompt.contains("block_type="));
+    let mut command = edit(&conn, &block, "Legacy exact text");
+    command.payload.block_kind = Some(ScriptBlockKind::Dialogue);
+    apply_edit_script_block(&mut conn, &command, 20).unwrap();
+    assert_eq!(
+        crate::ai_script_context::load_script_context(&conn, node, 0, 1000).unwrap()[0].block_kind,
+        Some(ScriptBlockKind::Dialogue)
+    );
+    assert_eq!(unknown[0].block_kind, None);
 }
 
 #[test]

@@ -204,6 +204,7 @@ fn consumed_source_append_requires_review_and_explicit_update_refreshes_all_memb
             .needs_review
     );
     let edit = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         document_id: a.document_id,
         block_id: source.blocks[1].block.id.clone(),
         expected_revision_event_id: source.blocks[1].revision_event_id.unwrap(),
@@ -392,6 +393,7 @@ fn reconciled_manual_edit_preserves_later_exact_text_and_consumed_source_review(
         .unwrap()[0]
         .clone();
     let original = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         document_id: a.document_id.clone(),
         block_id: first.block_id.clone(),
         expected_revision_event_id: first.revision_event_id,
@@ -422,6 +424,7 @@ fn reconciled_manual_edit_preserves_later_exact_text_and_consumed_source_review(
         .find(|block| block.block.id == first.block_id)
         .unwrap();
     let newer = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         expected_revision_event_id: current.revision_event_id.unwrap(),
         text: "  Later canonical author text — 雪\n\n  ".into(),
         ..original.payload.clone()
@@ -483,12 +486,14 @@ fn retained_draft_from_an_explicit_read_still_refuses_later_edits_then_updates_c
         .clone();
     let draft_text = "  Exact retained draft — 雨\n\n  ";
     let stale = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         document_id: a.document_id.clone(),
         block_id: input.block_id.clone(),
         expected_revision_event_id: input.revision_event_id,
         text: draft_text.into(),
     });
     let writer = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         text: "Another author's current text".into(),
         ..stale.payload.clone()
     });
@@ -507,10 +512,12 @@ fn retained_draft_from_an_explicit_read_still_refuses_later_edits_then_updates_c
         .unwrap();
     assert_eq!(current.block.text, writer.payload.text);
     let continued = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         expected_revision_event_id: current.revision_event_id.unwrap(),
         ..stale.payload.clone()
     });
     let later = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         text: "Same text, later revision".into(),
         ..continued.payload.clone()
     });
@@ -535,6 +542,7 @@ fn retained_draft_from_an_explicit_read_still_refuses_later_edits_then_updates_c
         .find(|block| block.block.id == input.block_id)
         .unwrap();
     let confirmed = CommandEnvelope::new(EditScriptBlockCommand {
+        block_kind: None,
         expected_revision_event_id: reread.revision_event_id.unwrap(),
         ..stale.payload.clone()
     });

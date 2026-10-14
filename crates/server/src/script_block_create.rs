@@ -8,7 +8,7 @@ use rusqlite::Connection;
 
 use crate::history_store::{self, HistoryStoreError, RecordChangeOutcome};
 use crate::script_document_command::{self, ScriptDocumentCommandError};
-use crate::{script_store, script_store_codec, timeline_node_store};
+use crate::{script_store, timeline_node_store};
 
 const COMMAND_TYPE: &str = "script.create_block";
 
@@ -94,19 +94,13 @@ pub(crate) fn apply_create_script_block(
         }),
     )));
     revisions.push(
-        script_document_command::block_revision(&block, None, event.id)
-            .with_field(FieldDelta::new(
-                "block_kind",
-                None,
-                Some(FieldValue::Text(
-                    script_store_codec::encode_block_kind(&block.block_kind).into(),
-                )),
-            ))
-            .with_field(FieldDelta::new(
+        script_document_command::block_revision(&block, None, event.id).with_field(
+            FieldDelta::new(
                 "sort_order",
                 None,
                 Some(FieldValue::Integer(i64::from(block.sort_order))),
-            )),
+            ),
+        ),
     );
     let mut span_revision = script_document_command::span_revision(&span, event.id)
         .with_field(FieldDelta::new(

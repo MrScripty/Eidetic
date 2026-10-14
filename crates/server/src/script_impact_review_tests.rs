@@ -88,6 +88,7 @@ pub(crate) fn edit(conn: &mut Connection, block: &SetScriptBlockCommand, text: &
     script_block_edit::apply_edit_script_block(
         conn,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: block.document_id.clone(),
             block_id: block.block_id.clone(),
             expected_revision_event_id: revision,

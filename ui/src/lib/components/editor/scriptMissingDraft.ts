@@ -22,5 +22,5 @@ export function copyMissingScriptDraft(
     composer.state.uncertain
   )
     return false;
-  return composer.begin(source, { text: draft.text, kind: editor.originalKind });
+  return composer.begin(source, { text: draft.text, kind: draft.kind });
 }

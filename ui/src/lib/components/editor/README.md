@@ -32,6 +32,8 @@ This directory contains the main beat and script viewing workflow, including AI 
 | `scriptMissingDraft.svelte.test.ts` | Removal rendering, independent drafts, read failure/return, guarded copy, cancel and immutable retry. |
 | `ScriptBlockEditor.svelte` | Session-owned per-block edit/save/cancel surface with exact uncertain retry and explicit reload. |
 | `scriptBlockEditDraft.svelte.ts` | Captured draft, immutable pending edit, read comparison and explicit continuation from that version. |
+| `ScriptBlockTypeEvidence.svelte` | Original/current owned screenplay type and exact consumed text in targeted review. |
+| `scriptBlockTypeEdit.svelte.test.ts`, `scriptBlockTypeEdit.client.test.ts` | Type-only editing, session/retry/comparison and real browser rune proxy fixtures. |
 | `scriptBlockEditComparison.svelte.test.ts` | Exact draft/current-text comparison, explicit version continuation, stale/ABA/read failures, navigation, immutable retry and retired-session fixtures. |
 | `scriptBlockEditLifetime.ssr.test.ts` | Fresh workspace consumers, independent Unicode drafts, delayed acknowledgement, exact command replay, refusal/reload and retired-session fixture regressions. |
 | `ScriptImpactNotice.svelte` | Read-only Needs review notice with changed/deleted input explanations and historical excerpts. |
@@ -270,7 +272,7 @@ Missing saved blocks do not hide their session-owned manual drafts or uncertain
 original saves. ScriptMissingDraft labels absence from the current view without
 asserting deletion after failed reads. It preserves original block/revision
 identity and offers existing read/retry guards. Explicit copy captures exact text
-and original kind into the idle existing composer for the visibly selected clip;
+and authored draft kind into the idle existing composer for the visibly selected clip;
 it neither restores the old block nor discards the source draft. A busy/uncertain
 source or active composer refuses copy. Cancel of the copy leaves the source
 intact. Only ordinary Save creates new canonical UserEdited material, using the

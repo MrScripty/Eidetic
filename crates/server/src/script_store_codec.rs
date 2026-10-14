@@ -141,7 +141,7 @@ fn decode_segment_status(value: &str) -> Result<ScriptSegmentStatus, HistoryStor
     }
 }
 
-fn decode_block_kind(value: &str) -> Result<ScriptBlockKind, HistoryStoreError> {
+pub(crate) fn decode_block_kind(value: &str) -> Result<ScriptBlockKind, HistoryStoreError> {
     match value {
         "scene_heading" => Ok(ScriptBlockKind::SceneHeading),
         "action" => Ok(ScriptBlockKind::Action),

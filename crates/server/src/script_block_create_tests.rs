@@ -122,6 +122,7 @@ fn first_manual_block_persists_exact_text_authorship_and_neighbor_memory_on_reop
     script_block_edit::apply_edit_script_block(
         &mut reopened,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: payload.document_id,
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -276,6 +277,7 @@ fn replay_after_edit_and_append_preserves_latest_text_and_rejects_payload_reuse(
     crate::script_block_edit::apply_edit_script_block(
         &mut conn,
         &CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: payload.document_id.clone(),
             block_id: block.block.id.clone(),
             expected_revision_event_id: block.revision_event_id.unwrap(),
@@ -378,4 +380,51 @@ fn timeline_range_write_moves_new_authored_segment_without_changing_text_revisio
         ai_script_context::load_script_context(&conn, payload.source_node_id, 6000, 7000).unwrap();
     assert_eq!(memory[0].text, payload.text);
     assert_eq!((memory[0].start_ms, memory[0].end_ms), (6000, 7000));
+}
+
+#[test]
+fn manual_creation_review_has_one_owned_kind_delta_and_replay_preserves_history() {
+    let (mut conn, _, mut payload) = fixture();
+    payload.block_kind = ScriptBlockKind::Dialogue;
+    let command = CommandEnvelope::new(payload);
+    apply_create_script_block(&mut conn, &command, 10).unwrap();
+    let before = history_store::load_change_review_changes(&conn, 10).unwrap();
+    let revision = before[0]
+        .revisions
+        .iter()
+        .find(|revision| revision.object_kind == ObjectKind::ScriptBlock)
+        .unwrap();
+    let kinds = revision
+        .fields
+        .iter()
+        .filter(|field| field.field_key == "block_kind")
+        .collect::<Vec<_>>();
+    assert_eq!(
+        kinds.len(),
+        1,
+        "change review requires one key per field delta"
+    );
+    assert_eq!(
+        kinds[0].new_value,
+        Some(FieldValue::Text("dialogue".into()))
+    );
+    for revision in &before[0].revisions {
+        let keys = revision
+            .fields
+            .iter()
+            .map(|field| &field.field_key)
+            .collect::<std::collections::HashSet<_>>();
+        assert_eq!(keys.len(), revision.fields.len());
+    }
+    assert_eq!(
+        apply_create_script_block(&mut conn, &command, 20)
+            .unwrap()
+            .0,
+        RecordChangeOutcome::AlreadyRecorded
+    );
+    assert_eq!(
+        serde_json::to_value(history_store::load_change_review_changes(&conn, 10).unwrap())
+            .unwrap(),
+        serde_json::to_value(before).unwrap()
+    );
 }
