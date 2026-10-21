@@ -15,7 +15,7 @@ This directory defines host-agnostic command, event, revision, and projection co
 | `bible_render_graph.rs` | Disposable Bevy-facing story-bible graph projection DTOs, deterministic layout helpers, and neighborhood indexes derived from canonical graph rows. |
 | `context_influence.rs` | Timeline context stack with optional exact saved screenplay evidence and recorded evaluation/influence contracts. |
 | `graph_proposal.rs` | Generic reviewable graph proposal contracts for agent-proposed bible nodes, fields, edges, and timeline-context links. |
-| `script_document.rs` | Canonical script document, segment, block, span, lock, patch, and script projection contracts. |
+| `script_document.rs` | Canonical script document, segment, block, span, lock, patch, projection and guarded manual edit contracts, including optional authored type and owned consumed-type receipts. |
 | `script_impact_review.rs` | Explicit targeted preview request, bounded author-selected recall identities and captured screenplay/world-context evidence for revision-bound propagation proposals. |
 | `semantic_dependency.rs` | Typed semantic relationships with optional source/target revision bindings for generation lineage. |
 | `timeline_render.rs` | Timeline renderer projections, including core-derived gaps filtered by the renderer's minimum duration. |
@@ -220,3 +220,12 @@ Timeline title authoring uses `SetTimelineNodeNameCommand` with a required exact
 Optional `TimelineTitleInput` receipts record exact consumed names and owned clocks
 in generation/proposal JSON. Legacy absence remains unknown; baseline clock None
 is a known canonical read. Recap source IDs avoid ambiguous name-based resolution.
+
+## Clip arc and sibling authoring contracts
+
+`SetTimelineNodeArcsCommand` carries the originally read assigned IDs and owned
+field clock. `ReorderTimelineSiblingCommand` binds the selected node, adjacent
+neighbor and original complete sibling/parent membership read. The selected
+editor projects these reads through optional `arc_read` and `order_read` fields.
+Unknown legacy evidence stays distinct from known empty membership; optional
+consumption on screenplay receipts never backfills unobserved history.

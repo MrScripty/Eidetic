@@ -1,5 +1,34 @@
 # PR29 integration and remaining acceptance
 
+## Cleanup integration on 2026-10-21
+
+The disposition pass integrates main `6bef18778ad3a02148188b0b044d7a065acd28f8`
+into PR29 head `be03aa1f2b7e6e19da632fac3b2b7eb89ec12c73`, preserving both
+histories. Six documentation conflicts retain both authoring and local-inference
+contracts; product code merges mechanically. The Pumas pin remains `ad31e391`.
+The frontend dependency repair and its CI gates are already present on main and
+are not unique remaining PR29 work.
+
+Independent GPT-6.1 Sol High review found no new confirmed P1/P2 in the inspected
+consumer paths and approved the six documentation resolutions. The integration
+passes `git diff --cached --check`, launcher/setup shell syntax checks, five
+ONNX guard unit tests, seven authoring fixture regressions, Rust formatting and
+decision traceability. Pinned Node 24.12.0 frontend installation, lint, formatting,
+type checks, all 115 files / 646 tests and static build pass. A fresh dependency
+audit passes the existing high/critical gate, retaining only the three tracked
+low package rows for the single cookie advisory. Independent review against
+the exact `ad31e391` producer confirms the consumed discovery, DTO, typed
+operation/SSE, metadata and serving-cursor source contracts align. Core/server
+Rust checks are in progress. Exact-head hosted CI and final Rust results must
+be recorded in the PR before claiming the integration validated. The 2026-10-14
+counts below are historical evidence, not results for this composed tree.
+
+PR29 remains draft. Actual trained chat/embedding inference and native lifecycle
+acceptance below remain unexecuted; no model acquisition, credentials, scientific
+campaign, release or PR merge is performed as part of this source integration. The deferred
+borrowed-bootstrap observer issue remains recorded below. The PR discussion owns
+the final integration SHA, fresh validation and exact unresolved gates.
+
 ## Scope and source identity
 
 PR29's existing `codex/pumas-local-inference` branch starts at

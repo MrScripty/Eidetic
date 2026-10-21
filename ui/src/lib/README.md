@@ -204,3 +204,11 @@ the actual generation attachment, separate from upload acknowledgement.
 Pumas unload transport exposes the typed success/error/unloaded outcome so the
 operator surface can distinguish an unload receipt from an already-unserved
 model; provider errors remain rejected desktop commands.
+
+## Guarded arc assignment and sibling reorder
+
+`timelineCommandApi.ts` sends `SetTimelineNodeArcsCommand` and
+`ReorderTimelineSiblingCommand` through the existing desktop command envelope.
+Owned expected reads, original command IDs and replay receipts remain backend
+contracts; frontend drafts cannot manufacture a replacement current read after
+an uncertain write. `timelineCommandTypes.ts` mirrors those contracts.

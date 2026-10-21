@@ -191,6 +191,11 @@ fn capture_in_snapshot(
         crate::arc_description_applicability::capture(conn, node_id, &arcs.current)?,
     );
     Ok(ScriptImpactProposalBinding {
+        arc_membership_previous: crate::timeline_arc_membership::recorded(
+            conn,
+            request.generation_event_id,
+        )?,
+        arc_membership_current: Some(crate::timeline_arc_membership::capture(conn, node_id)?),
         arc_description_applicability_previous,
         arc_description_applicability_current,
         timeline_title_previous: titles.previous,
@@ -211,6 +216,10 @@ fn capture_in_snapshot(
         cause,
         target_segment_revision_event_id: segment_revision,
         script_inputs,
+        script_previous_inputs: crate::script_context_scope::recorded_inputs(
+            conn,
+            request.generation_event_id,
+        )?,
         bible_context,
         bible_inputs,
         bible_node_name_inputs,
@@ -407,6 +416,14 @@ pub(crate) fn accept_bound_proposal(
     )?;
     let mut dependencies =
         script_generation_lineage::dependencies(conn, &generated, event.id, created_at_ms)?;
+    if let Some(input) = &binding.arc_membership_current {
+        dependencies.push(crate::timeline_arc_membership::dependency(
+            input,
+            &write.segment_id,
+            event.id,
+            created_at_ms,
+        ));
+    }
     if let Some(input) = &binding.timeline_notes_current
         && let Some(dependency) = crate::timeline_notes_lineage::dependency(
             input,

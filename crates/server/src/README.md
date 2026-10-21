@@ -46,7 +46,7 @@ domain model in `eidetic-core`.
 | `script_block_create_tests.rs` | Exact persistence/context, locks, replay, refusal, writer rollback and retiming SQLite regressions. |
 | `script_block_create_impact_tests.rs` | Consumed-source append review/explicit acceptance, refreshed new-block lineage, later-append refusal, replay, rollback and historical retiming regressions; reconciled edits preserve newer text/review; explicitly continued drafts still reject later revisions and update canonical memory only on save. |
 | `script_block_create_service_tests.rs` | Native AppState save/reopen/preview/retime and queued project replacement regressions; empty canonical schema is initialized before queuing because refusal precedes database access. |
-| `script_block_edit.rs` | Manual text-only block edits with expected-revision and transaction-local lock validation, preserving server-owned placement and metadata. |
+| `script_block_edit.rs` | Manual text and optional type edits with expected-revision and transaction-local lock validation; type-only writes preserve spans/provenance and placement. |
 | `script_block_edit_tests.rs` | Save/reopen/history/context, stale/ABA refusal, lock refusal including locks added after a comparison read, and bounded continuity source regressions. |
 | `manual_script_workflow_tests.rs` | Native AppState preview and shared generation-admission regression with a deliberately stale project mirror and no provider call. |
 | `ai_temporal_context.rs` | Deterministic per-field fictional-time resolution before prompt construction; excludes future assertions and rejects same-time conflicts. |
@@ -740,3 +740,23 @@ when `success` is true; `unloaded: false` without an error is an already-unserve
 outcome rather than a successful unload receipt. Missing required receipt fields
 are rejected. HTTP fixtures retain the loaded model after ONNX/Ollama-shaped
 unload failures and verify the actual provider diagnostic reaches the caller.
+
+## Canonical arc assignment and sibling reorder
+
+`timeline_arc_membership` validates assigned IDs and owned field reads in the
+existing history transaction. `timeline_sibling_order` validates the complete
+sibling/parent membership read and applies the core two-subtree plan atomically
+with source-bound screenplay placement. Sparse owned history and stored original
+command receipts preserve replay after later edits, deletion or ABA.
+`timeline_arc_assignment_history` and `timeline_sibling_reorder_history` validate
+those original receipts instead of rebuilding them from today's timeline.
+Existing generation/proposal dependency rows supply targeted review; saved
+screenplay is replaced only by ordinary explicit acceptance.
+
+## One owned block-type history delta
+
+The shared `script_document_command::block_revision` records the canonical
+`block_kind` once. Manual creation adds its sparse order field without adding
+another kind delta; Change Review receives unique field keys and replay retains
+the original revision. Missing-draft copies preserve the authored draft type,
+while explicit creation remains the canonical Save authority.

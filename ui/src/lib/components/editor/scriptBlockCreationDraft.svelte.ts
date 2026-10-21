@@ -21,7 +21,10 @@ export function createScriptBlockCreationDraft(options: {
   newCommandId?: () => string;
 }): {
   readonly state: CreationDraft;
-  begin: (node: SelectedNodeEditorNode) => void;
+  begin: (
+    node: SelectedNodeEditorNode,
+    initial?: { text: string; kind: ScriptBlockKind },
+  ) => boolean;
   cancel: () => void;
   save: () => Promise<void>;
   useCurrentPlacement: (node: SelectedNodeEditorNode) => Promise<void>;
@@ -39,8 +42,11 @@ export function createScriptBlockCreationDraft(options: {
     placementRefused: false,
   });
   let submitted: { payload: CreateScriptBlockCommand; commandId: string } | null = null;
-  function begin(node: SelectedNodeEditorNode): void {
-    if (state.saving || submitted) return;
+  function begin(
+    node: SelectedNodeEditorNode,
+    initial?: { text: string; kind: ScriptBlockKind },
+  ): boolean {
+    if (state.writing || state.saving || submitted) return false;
     state.target = {
       node_id: node.node_id,
       name: node.name,
@@ -49,12 +55,13 @@ export function createScriptBlockCreationDraft(options: {
     };
     state.documentId = options.documentId();
     state.commandId = (options.newCommandId ?? createCommandId)();
-    state.text = '';
-    state.kind = 'action';
+    state.text = initial?.text ?? '';
+    state.kind = initial?.kind ?? 'action';
     state.error = null;
     state.uncertain = false;
     state.placementRefused = false;
     state.writing = true;
+    return true;
   }
   function cancel(): void {
     if (state.saving || submitted) return;

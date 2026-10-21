@@ -59,6 +59,7 @@ async fn manual_edit_reaches_preview_and_generation_admission_with_a_stale_proje
     let saved = crate::command_service::edit_script_block(
         &state,
         CommandEnvelope::new(EditScriptBlockCommand {
+            block_kind: None,
             document_id: seed.payload.document_id,
             block_id,
             expected_revision_event_id: seeded.payload.segments[0].blocks[0]

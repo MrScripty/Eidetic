@@ -156,6 +156,34 @@ fn recorded(
     }
 }
 
+/// The original screenplay evidence is independent of whether a complete
+/// continuity-window receipt was captured. Missing legacy inputs remain unknown.
+pub(crate) fn recorded_inputs(
+    conn: &Connection,
+    event: ChangeEventId,
+) -> Result<Option<Vec<ScriptContextBlock>>, HistoryStoreError> {
+    let (kind, json): (String, String) = conn.query_row(
+        "SELECT c.payload_type,c.payload_json FROM commands c JOIN change_events e ON e.command_id=c.id WHERE e.id=?1",
+        [event.0.to_string()], |row| Ok((row.get(0)?,row.get(1)?)))?;
+    match kind.as_str() {
+        "script.generate_block" => {
+            Ok(serde_json::from_str::<GenerateScriptBlockCommand>(&json)?.script_inputs)
+        }
+        "semantic.propagation_accept" => {
+            let command: AcceptPropagationProposalCommand = serde_json::from_str(&json)?;
+            let binding: String = conn.query_row(
+                "SELECT binding_json FROM script_impact_proposal_bindings WHERE proposal_id=?1",
+                [command.proposal_id.as_str()],
+                |row| row.get(0),
+            )?;
+            Ok(Some(
+                serde_json::from_str::<ScriptImpactProposalBinding>(&binding)?.script_inputs,
+            ))
+        }
+        _ => Ok(None),
+    }
+}
+
 fn signature(
     scope: &ScriptContextScope,
     inputs: &[ScriptContextBlock],

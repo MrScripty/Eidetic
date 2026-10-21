@@ -67,3 +67,12 @@ use eidetic_core::timeline::Timeline;
 ## Structured Producer Contract
 - Timeline nodes, tracks, structure segments, and relationships are persisted and mirrored by the UI.
 - Ordering and enum semantics must stay stable unless accompanied by coordinated persistence and frontend updates.
+
+## Atomic adjacent sibling planning
+
+`sibling_reorder.rs` plans a swap before mutation: equal-parent and equal-level
+adjacency, hierarchy/chronological agreement, duration/gap preservation, checked
+translation of both subtrees and child containment. Invalid ranges fail without
+changing nodes. The server owns revision receipts and atomic persisted writes;
+core planning does not reconstruct concurrency evidence. Content locks retain
+their AI-generation meaning and structural moves preserve locked content.

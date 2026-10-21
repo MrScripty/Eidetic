@@ -100,3 +100,11 @@ Build `pumas-rpc` with its default `inference-plugins` feature; an inference-dis
 binary is explicitly refused. The path dependency and `Cargo.lock` package version
 match the setup pin. See [local acceptance](pumas-local-inference.md) for runtime
 setup; no application model is downloaded during build or test.
+
+The 2026-10-14 authoring integration carries the exact reviewed frontend repair
+from PR29 commit `be03aa1f2b7e6e19da632fac3b2b7eb89ec12c73`, without importing
+its Pumas/model lifecycle changes. The security-relevant CI, package manifest,
+lockfile and historical audit report match that source. The repair uses compatible
+patches, SvelteKit 2.70.3 and coordinated Vitest/coverage 4.1.11, retaining Node
+24.12.0 and Vite 6.x. The audit report's previous execution evidence belongs to
+PR29; each new authoring integration must run its own checks and source CI.

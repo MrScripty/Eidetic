@@ -27,6 +27,26 @@ where
         user: String::new(),
     };
     append_script_context(&mut prompt.user, &binding.script_inputs);
+    if let eidetic_core::contracts::SemanticDependencyEndpoint::ScriptBlock { block_id } =
+        &binding.cause.input
+    {
+        for previous in binding
+            .script_previous_inputs
+            .iter()
+            .flatten()
+            .filter(|input| input.block_id == *block_id)
+        {
+            if let Some(kind) = &previous.block_kind {
+                prompt.user.push_str(&format!(
+                    "\nORIGINAL CONSUMED SCREENPLAY TYPE ({}, block_revision={}): {}\n{}\n",
+                    previous.block_id.as_str(),
+                    previous.revision_event_id.0,
+                    crate::script_store_codec::encode_block_kind(kind),
+                    previous.text
+                ));
+            }
+        }
+    }
     crate::timeline_title_lineage::append_prompt(&mut prompt.user, binding);
     if let Some(input) = &binding.timeline_notes_current {
         prompt.user.push_str(&format!(
@@ -58,6 +78,7 @@ where
     {
         prompt.user.push_str(&format!("\nORIGINAL KNOWN-EMPTY ARC DESCRIPTION APPLICABILITY ({}): description prose was not supplied; field revision {}\n", input.arc_id.0, input.revision_event_id.map(|event| event.0.to_string()).unwrap_or_else(|| "unknown".into())));
     }
+    crate::timeline_arc_membership::append_prompt(&mut prompt.user, binding);
     crate::story_arc_lineage::append_prompt(
         &mut prompt.user,
         binding.arc_inputs.as_deref().unwrap_or_default(),

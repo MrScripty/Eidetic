@@ -3,10 +3,12 @@ import type {
   EditScriptBlockCommand,
   RemoveScriptBlockCommand,
   ScriptBlockProjection,
+  ScriptBlockKind,
 } from '$lib/scriptTypes.js';
 
 interface SavedComparison {
   text: string;
+  kind: ScriptBlockKind;
   revisionEventId: string;
 }
 
@@ -28,6 +30,7 @@ export function createScriptBlockEditDraft(options: {
     },
     editing: false,
     text: '',
+    kind: 'action' as ScriptBlockKind,
     baseRevision: null as string | null,
     saving: false,
     comparing: false,
@@ -35,8 +38,10 @@ export function createScriptBlockEditDraft(options: {
     error: null as string | null,
     uncertain: false,
   });
+  let originalKind: ScriptBlockKind = 'action';
   let compared: SavedComparison | null = null;
   let submitted: { payload: EditScriptBlockCommand; commandId: string } | null = null;
+  let baseKind: ScriptBlockKind = 'action';
 
   let removalCapture: RemoveScriptBlockCommand | null = null;
   let submittedRemoval: { payload: RemoveScriptBlockCommand; commandId: string } | null = null;
@@ -103,7 +108,10 @@ export function createScriptBlockEditDraft(options: {
       block.block.id !== options.blockId
     )
       return;
+    originalKind = block.block.block_kind;
     state.text = block.block.text;
+    baseKind = block.block.block_kind;
+    state.kind = baseKind;
     state.baseRevision = block.revision_event_id ?? null;
     state.error = null;
     compared = null;
@@ -128,6 +136,7 @@ export function createScriptBlockEditDraft(options: {
           block_id: options.blockId,
           expected_revision_event_id: state.baseRevision,
           text: state.text,
+          ...(state.kind !== baseKind ? { block_kind: state.kind } : {}),
         },
         commandId: createCommandId(),
       };
@@ -179,7 +188,11 @@ export function createScriptBlockEditDraft(options: {
       if (!current?.revision_event_id || current.block.id !== options.blockId) {
         throw new Error('Saved block is unavailable.');
       }
-      compared = { text: current.block.text, revisionEventId: current.revision_event_id };
+      compared = {
+        text: current.block.text,
+        kind: current.block.block_kind,
+        revisionEventId: current.revision_event_id,
+      };
       // Display state cannot change the read snapshot used by explicit continuation.
       state.comparison = { ...compared };
     } catch (failure) {
@@ -200,11 +213,17 @@ export function createScriptBlockEditDraft(options: {
       return;
     }
     state.baseRevision = compared.revisionEventId;
+    baseKind = compared.kind;
     state.error = null;
     compared = null;
     state.comparison = null;
   }
   return {
+    documentId: options.documentId,
+    blockId: options.blockId,
+    get originalKind() {
+      return originalKind;
+    },
     state,
     begin,
     cancel,
@@ -233,6 +252,7 @@ function isEditRefusal(failure: unknown): boolean {
       'script document not found',
       'invalid command: script block update would remove locked span text',
       'invalid command: script block update would modify locked span text',
+      'cannot change the type of a locked script block',
     ].includes(failure.message)
   );
 }
