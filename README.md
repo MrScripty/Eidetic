@@ -15,6 +15,8 @@ The current Tauri desktop workspace brings together a timeline, screenplay edito
 Use Node.js 24.12.0, Rust 1.92.0 and your platform's Tauri native prerequisites. The build also requires Eidetic's pinned sibling Pumas checkout:
 
 ```bash
+mkdir -p "$HOME/eidetic-workspace/creative-media"
+cd "$HOME/eidetic-workspace/creative-media"
 git clone https://github.com/MrScripty/Eidetic.git
 cd Eidetic
 EIDETIC_FETCH_PUMAS=1 scripts/prepare-pumas-dependency.sh
@@ -23,7 +25,7 @@ EIDETIC_FETCH_PUMAS=1 scripts/prepare-pumas-dependency.sh
 ./launcher.sh --run
 ```
 
-The preparation script clones Pumas at the required sibling path if it is missing and verifies the expected revision. See [dependency setup](docs/dependency-governance.md#external-pumas-dependency) before using an existing checkout.
+This layout puts Eidetic at `eidetic-workspace/creative-media/Eidetic` and Pumas at `eidetic-workspace/ai-systems/Pumas-Library`, matching Cargo's required relative path. The preparation script clones Pumas there if it is missing and verifies the expected revision. See [dependency setup](docs/dependency-governance.md#external-pumas-dependency) before using an existing checkout.
 
 The launcher installs frontend dependencies and Git hooks. It keeps application state under `.launcher-state/` by default, and `--run` starts the frontend server for the desktop webview. It does not start the old browser application.
 
