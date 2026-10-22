@@ -7,7 +7,8 @@ This directory implements server-side adapters that translate core AI requests i
 | File/Folder | Description |
 |-------------|-------------|
 | `mod.rs` | Shared backend trait and adapter selection. |
-| `llamacpp.rs` | Local Pumas llama.cpp OpenAI-compatible adapter. |
+| `llamacpp.rs` | Existing direct local llama.cpp OpenAI-compatible adapter. |
+| `pumas.rs` | Managed Pumas typed chat operation v1 with capability checks, fenced transport and JSON-output validation. |
 | `openrouter.rs` | OpenRouter HTTP adapter. |
 | `sse.rs` | Shared stateful SSE framing, completion validation and transport error propagation. |
 | `sse_tests.rs` | Buffer boundaries, fragmented framing, malformed input and bounded provider diagnostics. |
@@ -66,3 +67,11 @@ use crate::ai_backends::AiBackend;
 ## Structured Producer Contract
 - Backend adapters must preserve the field semantics defined by core AI request/response types.
 - Changes to response interpretation require coordinated route and frontend progress-handling updates.
+
+Pumas typed SSE uses `started`, `delta`, `completed` and `failed` JSON events,
+checks contract version and request identity, and requires a valid terminal event
+plus clean HTTP EOF. The existing OpenAI-compatible providers continue to require
+`[DONE]`. Typed Pumas v1 has no JSON-mode option: structured calls explicitly
+request JSON in their prompt and validate JSON before the established parsers.
+This follows the producer contract at `ad31e391dcd94c204b3fcd748cc98d27b3281e65`;
+no direct ONNX session or fake backend is selected in production.

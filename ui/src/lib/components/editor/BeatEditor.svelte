@@ -384,6 +384,9 @@
       streamingTokenCount={editorState.streamingTokenCount}
       generationError={editorState.generationError}
       {nodeContext}
+      generationContext={editorState.lastGenerationNodeId === node.id
+        ? editorState.generationContext
+        : null}
       {contextLoading}
       editorNode={selectedProjection!.node!}
       onrefreshcontext={refreshContext}

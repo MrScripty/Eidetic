@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::backend_error::BackendError;
-use crate::embeddings::{Embedding, EmbeddingClient};
+#[cfg(test)]
+use crate::embeddings::Embedding;
+use crate::embeddings::EmbeddingClient;
 use crate::state::AppState;
 use crate::validation;
 use crate::vector_store::IndexTicket;
@@ -45,11 +47,6 @@ pub fn upload_reference(
         request.content,
         parse_reference_type(&request.doc_type),
     );
-    let chunks = chunk_document(
-        &doc,
-        crate::state::constants::REFERENCE_CHUNK_SIZE,
-        crate::state::constants::REFERENCE_CHUNK_OVERLAP,
-    );
     let response = doc.clone();
 
     let ticket = {
@@ -66,42 +63,137 @@ pub fn upload_reference(
     };
     state.trigger_save();
 
-    let state_clone = state.clone();
-    state
-        .task_supervisor
-        .spawn("reference-embedding", async move {
-            let config = state_clone.ai_config.lock().clone();
-            let client =
-                EmbeddingClient::new(&config.base_url, crate::state::constants::EMBEDDING_MODEL);
-
-            let (mut indexed, mut failed, mut discarded) = (0, 0, 0);
-            for chunk in chunks {
-                match client.embed(&chunk.content).await {
-                    Ok(embedding) => {
-                        let inserted = publish_embedding(&state_clone, &ticket, chunk, embedding);
-                        if inserted {
-                            indexed += 1;
-                        } else {
-                            discarded += 1;
-                        }
-                    }
-                    Err(error) => {
-                        failed += 1;
-                        tracing::warn!("Failed to embed chunk: {error}");
-                    }
-                }
-            }
-            tracing::info!(
-                indexed,
-                failed,
-                discarded,
-                "Reference embedding task finished"
-            );
-        });
+    schedule_document(state, response.clone(), ticket);
 
     Ok(response)
 }
 
+/// Derived index state is session-bound and never persisted as canonical content.
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct ReferenceIndexStatus {
+    pub documents: Vec<ReferenceDocumentIndexStatus>,
+}
+#[derive(Debug, Clone, Serialize)]
+pub struct ReferenceDocumentIndexStatus {
+    pub document_id: Uuid,
+    pub name: String,
+    pub state: String,
+    pub indexed_chunks: usize,
+    pub dimensions: Option<usize>,
+    pub model: Option<String>,
+    pub revision: Option<String>,
+    pub error: Option<String>,
+}
+
+pub fn index_status(state: &AppState) -> Result<ReferenceIndexStatus, BackendError> {
+    let project = state.project.lock();
+    let project = project.as_ref().ok_or_else(BackendError::no_project)?;
+    let store = state.vector_store.lock();
+    Ok(ReferenceIndexStatus {
+        documents: project
+            .references
+            .iter()
+            .map(|doc| store.document_status(doc))
+            .collect(),
+    })
+}
+
+pub fn schedule_reindex(state: &AppState) {
+    rebuild_references(state, true);
+}
+
+pub(crate) fn schedule_reopened_index(state: &AppState) {
+    rebuild_references(state, false);
+}
+
+fn rebuild_references(state: &AppState, reset: bool) {
+    let documents = {
+        let project = state.project.lock();
+        let Some(project) = project.as_ref() else {
+            return;
+        };
+        let mut store = state.vector_store.lock();
+        if reset {
+            store.reset();
+        }
+        project
+            .references
+            .iter()
+            .map(|doc| (doc.clone(), store.begin_document(Arc::new(doc.clone()))))
+            .collect::<Vec<_>>()
+    };
+    for (doc, ticket) in documents {
+        schedule_document(state, doc, ticket);
+    }
+}
+
+fn schedule_document(state: &AppState, doc: ReferenceDocument, ticket: IndexTicket) {
+    let state = state.clone();
+    let config = state.ai_config.lock().embedding.clone();
+    state
+        .clone()
+        .task_supervisor
+        .spawn("reference-embedding", async move {
+            let result = index_document(&state, &doc, &ticket, &config).await;
+            if let Err(error) = result {
+                tracing::warn!(document=%doc.name, %error, "Reference indexing failed");
+                let project = state.project.lock();
+                if let Some(project) = project.as_ref() {
+                    state.vector_store.lock().finish_document(
+                        &ticket,
+                        &project.references,
+                        Some(error),
+                    );
+                }
+            }
+        });
+}
+
+async fn index_document(
+    state: &AppState,
+    doc: &ReferenceDocument,
+    ticket: &IndexTicket,
+    config: &crate::embeddings::EmbeddingConfig,
+) -> Result<(), String> {
+    let client = EmbeddingClient::from_config(config).await?;
+    let chunks = chunk_document(
+        doc,
+        crate::state::constants::REFERENCE_CHUNK_SIZE,
+        crate::state::constants::REFERENCE_CHUNK_OVERLAP,
+    );
+    let mut completed = Vec::new();
+    let mut dimensions = None;
+    for chunk in chunks {
+        // Obsolete tasks stop before the next expensive model operation.
+        if state.ai_config.lock().embedding != *config
+            || !state.vector_store.lock().ticket_current(ticket)
+        {
+            return Ok(());
+        }
+        let embedding = client.embed(&chunk.content).await?;
+        if dimensions.is_some_and(|value| value != embedding.values.len()) {
+            return Err("Embedding dimensions changed during reference indexing".into());
+        }
+        dimensions = Some(embedding.values.len());
+        completed.push((chunk, embedding));
+    }
+    // Publish the entire document only after all real operations succeeded.
+    let project = state.project.lock();
+    let Some(project) = project.as_ref() else {
+        return Ok(());
+    };
+    if state.ai_config.lock().embedding != *config {
+        return Ok(());
+    }
+    let mut store = state.vector_store.lock();
+    for (chunk, embedding) in completed {
+        store.insert(ticket, &project.references, chunk, embedding);
+    }
+    store.finish_document(ticket, &project.references, None);
+    Ok(())
+}
+
+#[cfg(test)]
 fn publish_embedding(
     state: &AppState,
     ticket: &IndexTicket,
@@ -192,7 +284,9 @@ mod tests {
     #[tokio::test]
     async fn completed_embedding_cannot_resurrect_a_deleted_reference() {
         use super::{delete_reference, publish_embedding};
-        use crate::embeddings::{Embedding, EmbeddingClient};
+        #[cfg(test)]
+        use crate::embeddings::Embedding;
+        use crate::embeddings::EmbeddingClient;
         use eidetic_core::reference::{ReferenceDocument, chunk_document};
         use std::sync::Arc;
 
