@@ -53,9 +53,13 @@ Eidetic to borrow an authenticated advertised local service. On Linux, also set
 `EIDETIC_PUMAS_RPC_BIN=/absolute/path/to/pumas-rpc` to allow the selected-root
 `--attach-or-start-local-http` bootstrap. This starts only the Pumas control plane;
 model/runtime selection stays explicit. The bootstrap's ownership acknowledgement
-and exact instance/service generations govern cleanup. Cancelled startup finishes
-its admitted construction and drains an owned service. On application shutdown an
-owned service receives a generation-fenced shutdown and its child exit is observed.
+and exact instance/service generations govern cleanup. Cancelled startup continues
+its admitted construction; the controlled success fixture observes owned-service
+drain. Complete startup error/panic observation after cancellation and last-Drop
+cleanup still require the retained composition owner described in
+[the lifecycle acceptance gate](reports/pr29-lifecycle-ownership.md).
+On explicit application shutdown an owned service receives a generation-fenced
+shutdown, and its child exit and stdout-drain result are observed.
 A borrowed Pumas service receives no implicit unload/shutdown. Explicit bootstrap
 failures appear in AI status and keep Pumas selected; they do not revert to a
 direct llama.cpp endpoint. **Unload** is an

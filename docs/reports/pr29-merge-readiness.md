@@ -109,3 +109,10 @@ failure path drops its child observer. The pinned producer normally exits
 immediately after borrowed acknowledgement. This lower-priority subprocess
 robustness issue is deferred to a separately scoped lifecycle repair. It does not
 grant authority to unload or shut down the borrowed Pumas service.
+
+That paragraph records the historical observation. The subsequent
+[partial lifecycle repair](pr29-lifecycle-ownership.md) terminates/reaps the
+spawned borrowed helper on its normal timeout path and observes stdout completion,
+without touching the borrowed service. Complete failed-startup and last-Drop
+cleanup observation still requires the composition-owner decision in that report;
+the earlier deferred classification is superseded only for the repaired path.

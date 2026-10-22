@@ -67,7 +67,7 @@ domain model in `eidetic-core`.
 | `embeddings.rs` | Independently configured real Pumas typed embeddings and authenticated OpenAI-compatible embedding adapter, binding provider/model/profile/load revision and finite nonzero vectors. |
 | `pumas_inference.rs` | Fenced Pumas discovery, typed operation v1/capability reads, model metadata revision and explicit serving lifecycle RPC consumer. |
 | `pumas_inference_tests.rs` | Controlled HTTP fixtures proving load/use/unload, reference upload/reopen/model-revision refusal, visible errors and retrieved prompt contributions; no real-model inference claim. |
-| `pumas_runtime.rs` | Optional selected-root Pumas control-plane bootstrap with cancellation-safe owning handoff and generation-fenced owned shutdown; borrowed owners are never stopped. |
+| `pumas_runtime.rs` | Optional selected-root Pumas control-plane bootstrap and generation-fenced owned shutdown. Explicit drain retains child/output completion; cancelled construction and last-Drop observation remain gated by the lifecycle report. Borrowed services are never stopped. |
 | `vector_store.rs` | Disposable exact-source index with publication tickets, representation-space filtering and stable ranking. |
 | `vector_store_tests.rs` | Source custody, stale lifecycle, incompatible representation and numeric ranking regressions. |
 | `reference_retrieval_tests.rs` | Actual RAG attach-boundary regression coverage for queued/reopened sessions and late query results. |
@@ -729,6 +729,14 @@ references are canonical saved SQLite project content.
 The Linux cancelled-startup fixture observes actual `/proc` child disappearance
 after the owned wait receipt before deleting its signal files or ending the test
 runtime; a recorded shutdown RPC alone is not process-cessation evidence.
+
+Explicit Pumas shutdown retains the child and stdout-drain completion together,
+including I/O errors and panics. Cancelling a shutdown waiter leaves that output
+handle available to the next waiter. A hung borrowed bootstrap is terminated
+and reaped as our helper only, without sending shutdown/unload to the borrowed
+service. Full cancelled-construction and last-Drop completion ownership still
+requires a retained composition owner; see the
+[lifecycle repair and remaining decision](../../../docs/reports/pr29-lifecycle-ownership.md).
 
 Explicit selected-root bootstrap failures preserve Pumas as the selected backend
 and expose the actual startup error in AI status. They never silently revert to
